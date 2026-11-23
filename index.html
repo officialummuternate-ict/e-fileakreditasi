@@ -39,16 +39,22 @@
     <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800 no-print">
         <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
             <div class="flex items-center gap-3">
-                <img src="logo.jpg" onerror="this.onerror=null; this.src='https://placehold.co/100x100/1e3a8a/fbbf24?text=SMAN+1';" alt="Logo" class="w-11 h-11 rounded-full object-cover bg-white p-0.5 border border-amber-400">
+                <img src="https://placehold.co/100x100/1e3a8a/fbbf24?text=SMAN+1" alt="Logo" class="app-logo w-11 h-11 rounded-full object-cover bg-white p-0.5 border border-amber-400">
                 <div>
                     <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500 text-slate-950">Evaluasi Akhir PKL</span>
                     <h1 class="font-display font-extrabold text-base sm:text-lg leading-tight mt-0.5">UJIAN PKL — SMA NEGERI 1 MABA</h1>
-                    <p class="text-[11px] text-slate-400">Kompetensi Informatika & Etos Kerja Industri</p>
+                    <p class="text-[11px] text-slate-400">Kompetensi Informatika &amp; Etos Kerja Industri</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 text-xs font-mono">
-                <i class="fa-regular fa-clock text-amber-400"></i>
-                <span id="timer-ujian">45:00</span>
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 text-xs font-mono">
+                    <i class="fa-regular fa-clock text-amber-400"></i>
+                    <span id="timer-ujian">45:00</span>
+                </div>
+                <button type="button" onclick="bukaModalLogo()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl border border-slate-700 text-xs font-semibold transition flex items-center gap-1.5" title="Ganti Logo Sekolah (Admin)">
+                    <i class="fa-solid fa-image text-amber-400"></i>
+                    <span class="hidden sm:inline">Ganti Logo</span>
+                </button>
             </div>
         </div>
     </header>
@@ -86,7 +92,7 @@
             </div>
         </section>
 
-        <!-- 2. DAFTAR SOAL UJIAN (TERPETAKAN KE 6 INDIKATOR NILAI) -->
+        <!-- 2. DAFTAR SOAL UJIAN -->
         <form id="form-ujian-pkl" onsubmit="prosesNilaiUjian(event)" class="space-y-6">
             <div id="container-soal" class="space-y-5"></div>
 
@@ -97,7 +103,7 @@
                 </div>
                 <button type="submit" id="btn-selesai-ujian" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-display font-bold text-sm shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-check-double"></i>
-                    <span>Selesaikan & Hitung Rekap Nilai PKL</span>
+                    <span>Selesaikan &amp; Simpan Nilai PKL</span>
                 </button>
             </div>
         </form>
@@ -106,7 +112,7 @@
         <section id="lembar-hasil-nilai" class="hidden bg-white rounded-3xl p-6 sm:p-10 shadow-xl border-2 border-slate-300 mt-8">
             <div class="flex flex-wrap justify-between items-center border-b-2 border-slate-900 pb-4 mb-6 gap-4">
                 <div class="flex items-center gap-3.5">
-                    <img src="logo.jpg" onerror="this.onerror=null; this.src='https://placehold.co/100x100/1e3a8a/fbbf24?text=SMAN+1';" class="w-14 h-14 rounded-full object-cover border">
+                    <img src="https://placehold.co/100x100/1e3a8a/fbbf24?text=SMAN+1" class="app-logo w-14 h-14 rounded-full object-cover border">
                     <div>
                         <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">LEMBAR PENILAIAN EVALUASI PKL</h2>
                         <p class="text-xs font-semibold text-slate-600">SMA NEGERI 1 MABA • KABUPATEN HALMAHERA TIMUR</p>
@@ -114,7 +120,7 @@
                 </div>
                 <div class="text-right text-xs">
                     <span id="hasil-tanggal" class="font-mono text-slate-500 block"></span>
-                    <span id="status-sync-sheets" class="inline-block mt-1 px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Rekap Otomatis Selesai</span>
+                    <span id="status-sync-sheets" class="inline-block mt-1 px-2.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">Menyimpan ke Google Sheets...</span>
                 </div>
             </div>
 
@@ -126,7 +132,7 @@
                 <div><span class="text-slate-500">Tempat PKL:</span> <strong id="res-instansi" class="text-blue-800"></strong></div>
             </div>
 
-            <!-- TABEL PENILAIAN PERSIS SESUAI FORMAT ANDA -->
+            <!-- TABEL PENILAIAN -->
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse border border-slate-400 text-xs sm:text-sm">
                     <thead>
@@ -138,7 +144,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- ASPEK A -->
                         <tr class="bg-blue-50 font-bold text-slate-900">
                             <td class="border border-slate-400 py-2.5 px-3 text-center">A</td>
                             <td class="border border-slate-400 py-2.5 px-4" colspan="3">Aspek Non-Teknis (Sikap &amp; Etos Kerja)</td>
@@ -162,7 +167,6 @@
                             <td id="pred-a3" class="border border-slate-400 py-2.5 px-4 text-center font-semibold">-</td>
                         </tr>
 
-                        <!-- ASPEK B -->
                         <tr class="bg-amber-50 font-bold text-slate-900">
                             <td class="border border-slate-400 py-2.5 px-3 text-center">B</td>
                             <td class="border border-slate-400 py-2.5 px-4" colspan="3">Aspek Teknis (Kompetensi Informatika)</td>
@@ -186,7 +190,6 @@
                             <td id="pred-b3" class="border border-slate-400 py-2.5 px-4 text-center font-semibold">-</td>
                         </tr>
 
-                        <!-- TOTAL & RATA-RATA -->
                         <tr class="bg-slate-100 font-bold text-slate-900">
                             <td class="border border-slate-400 py-3 px-4 text-right" colspan="2">Total Nilai</td>
                             <td id="val-total" class="border border-slate-400 py-3 px-3 text-center font-mono text-base text-blue-700">0</td>
@@ -201,7 +204,6 @@
                 </table>
             </div>
 
-            <!-- Keterangan Skala Predikat -->
             <div class="mt-4 text-[11px] text-slate-500 flex flex-wrap gap-4">
                 <span><strong>Keterangan Predikat:</strong></span>
                 <span>90 – 100 = Sangat Baik (A)</span>
@@ -210,7 +212,6 @@
                 <span>&lt; 70 = Kurang (D)</span>
             </div>
 
-            <!-- Tombol Aksi Cetak / Ulangi -->
             <div class="mt-6 pt-4 border-t flex flex-wrap justify-between items-center gap-3 no-print">
                 <button type="button" onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow flex items-center gap-2">
                     <i class="fa-solid fa-print"></i> Cetak / Simpan PDF Lembar Nilai
@@ -223,17 +224,133 @@
 
     </main>
 
+    <!-- MODAL GANTI LOGO ADMIN -->
+    <div id="modal-logo" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border relative">
+            <button type="button" onclick="tutupModalLogo()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-red-500 hover:text-white flex items-center justify-center absolute top-4 right-4 font-bold">&times;</button>
+            <h3 class="font-display font-bold text-lg text-slate-900 mb-1">Ganti Logo Sekolah (Database)</h3>
+            <p class="text-xs text-slate-500 mb-4">Logo akan tersimpan permanen di Google Sheets dan otomatis tampil untuk semua siswa.</p>
+
+            <div class="flex flex-col items-center mb-4">
+                <img id="preview-logo-modal" src="https://placehold.co/100x100/1e3a8a/fbbf24?text=SMAN+1" class="app-logo w-24 h-24 rounded-full object-cover border-2 border-amber-400 shadow">
+            </div>
+
+            <form onsubmit="simpanLogoKeDatabase(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Pilih File Logo Baru (.png / .jpg) *</label>
+                    <input type="file" id="input-file-logo" accept="image/*" required onchange="previewUploadLogo(this)" class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">PIN Admin *</label>
+                    <input type="password" id="input-pin-admin" required placeholder="Masukkan PIN (default: admin123)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300">
+                </div>
+                <button type="submit" id="btn-simpan-logo" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow transition">
+                    Simpan Logo ke Google Sheets
+                </button>
+            </form>
+        </div>
+    </div>
+
     <footer class="bg-slate-950 text-slate-400 py-5 text-center text-xs border-t border-slate-800 no-print">
         © 2026 Sistem Evaluasi PKL — SMA Negeri 1 Maba, Kabupaten Halmahera Timur.
     </footer>
 
     <script>
-        // Opsional: Terhubung ke Google Apps Script Anda untuk merekam log nilai ke sheet Pesan/Nilai
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbwIF4kkqFxzxrkcW7h62J8j05wXdyfZS2WId-4Ax34aR16Tn4TIrWYIATcra2TP3IpG/exec';
+        // =========================================================================
+        // GANTI LINK DI BAWAH INI DENGAN URL WEB APP (/exec) GOOGLE APPS SCRIPT ANDA
+        // =========================================================================
+        const scriptURL = 'TEMPEL_URL_WEB_APP_ANDA_DI_SINI';
 
-        // Bank Soal Terstruktur (3 Soal per Indikator = Total 18 Soal)
+        let logoBase64SiapKirim = '';
+
+        // 1. MUAT LOGO DARI DATABASE (CACHE INSTAN + SINKRON GOOGLE SHEETS)
+        function muatLogoDariDatabase() {
+            const cachedLogo = localStorage.getItem('sman1maba_pkl_logo');
+            if (cachedLogo) {
+                document.querySelectorAll('.app-logo').forEach(img => img.src = cachedLogo);
+            }
+            if (!scriptURL || scriptURL.includes('TEMPEL_URL')) return;
+
+            fetch(scriptURL)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.logoWeb) {
+                        document.querySelectorAll('.app-logo').forEach(img => img.src = data.logoWeb);
+                        localStorage.setItem('sman1maba_pkl_logo', data.logoWeb);
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function bukaModalLogo() { document.getElementById('modal-logo').classList.remove('hidden'); }
+        function tutupModalLogo() { document.getElementById('modal-logo').classList.add('hidden'); }
+
+        // Kompresi logo agar ringan & muat di sel Google Sheets
+        function previewUploadLogo(input) {
+            if (!input.files || !input.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxDim = 200;
+                    let w = img.width, h = img.height;
+                    if (w > h) {
+                        if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+                    } else {
+                        if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    logoBase64SiapKirim = canvas.toDataURL('image/png', 0.8);
+                    document.getElementById('preview-logo-modal').src = logoBase64SiapKirim;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function simpanLogoKeDatabase(e) {
+            e.preventDefault();
+            if (!logoBase64SiapKirim) return alert('Silakan pilih file gambar logo terlebih dahulu.');
+            if (scriptURL.includes('TEMPEL_URL')) return alert('Silakan isi scriptURL dengan URL Google Apps Script Anda terlebih dahulu.');
+
+            const btn = document.getElementById('btn-simpan-logo');
+            const orig = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Menyimpan ke Database...';
+
+            fetch(scriptURL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'updateLogo',
+                    pin: document.getElementById('input-pin-admin').value.trim(),
+                    logoWeb: logoBase64SiapKirim
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.querySelectorAll('.app-logo').forEach(img => img.src = logoBase64SiapKirim);
+                    localStorage.setItem('sman1maba_pkl_logo', logoBase64SiapKirim);
+                    alert('Logo berhasil diperbarui dan tersimpan di Google Sheets!');
+                    tutupModalLogo();
+                } else {
+                    alert(data.message || 'Gagal menyimpan logo. Periksa PIN Admin.');
+                }
+            })
+            .catch(() => alert('Gagal terhubung ke Google Sheets.'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = orig;
+            });
+        }
+
+        // 2. BANK SOAL TERSTRUKTUR (18 SOAL = 3 SOAL PER INDIKATOR)
         const bankSoalPKL = [
-            // === A1: Disiplin dan Kehadiran ===
+            // A1: Disiplin dan Kehadiran
             {
                 kode: 'a1', aspek: 'A.1 Disiplin dan Kehadiran',
                 tanya: 'Jam masuk kerja di instansi tempat PKL ditetapkan pukul 07.30 WIT. Tindakan paling mencerminkan kedisiplinan siswa PKL adalah...',
@@ -268,7 +385,7 @@
                 kunci: 1
             },
 
-            // === A2: Kerjasama Tim dan Komunikasi ===
+            // A2: Kerjasama Tim dan Komunikasi
             {
                 kode: 'a2', aspek: 'A.2 Kerjasama Tim dan Komunikasi',
                 tanya: 'Ketika menerima instruksi pekerjaan dari staf instansi yang kurang jelas detail teknisnya, langkah komunikasi yang tepat adalah...',
@@ -303,7 +420,7 @@
                 kunci: 0
             },
 
-            // === A3: Etika, Sikap, dan Kerapian ===
+            // A3: Etika, Sikap, dan Kerapian
             {
                 kode: 'a3', aspek: 'A.3 Etika, Sikap, dan Kerapian',
                 tanya: 'Siswa PKL di bagian administrasi/IT sering menjumpai dokumen internal atau data kependudukan/pegawai. Prinsip etika profesi yang wajib dijaga adalah...',
@@ -338,16 +455,11 @@
                 kunci: 1
             },
 
-            // === B1: Penguasaan Materi/Keterampilan Informatika ===
+            // B1: Penguasaan Materi/Keterampilan Informatika
             {
                 kode: 'b1', aspek: 'B.1 Penguasaan Materi / Keterampilan Informatika',
                 tanya: 'Dalam pengolahan data rekapitulasi nilai atau inventaris barang di Microsoft Excel / Google Sheets, fungsi yang digunakan untuk menjumlahkan data berdasarkan kriteria tertentu adalah...',
-                opsi: [
-                    'VLOOKUP',
-                    'SUMIF',
-                    'CONCATENATE',
-                    'COUNTBLANK'
-                ],
+                opsi: ['VLOOKUP', 'SUMIF', 'CONCATENATE', 'COUNTBLANK'],
                 kunci: 1
             },
             {
@@ -364,16 +476,11 @@
             {
                 kode: 'b1', aspek: 'B.1 Penguasaan Materi / Keterampilan Informatika',
                 tanya: 'Perangkat jaringan yang berfungsi meneruskan paket data antar dua atau lebih segmen jaringan dengan alamat IP yang berbeda adalah...',
-                opsi: [
-                    'Switch Unmanaged',
-                    'Access Point',
-                    'Router',
-                    'Repeater'
-                ],
+                opsi: ['Switch Unmanaged', 'Access Point', 'Router', 'Repeater'],
                 kunci: 2
             },
 
-            // === B2: Kemampuan Pemecahan Masalah (Troubleshooting) ===
+            // B2: Kemampuan Pemecahan Masalah
             {
                 kode: 'b2', aspek: 'B.2 Kemampuan Pemecahan Masalah',
                 tanya: 'Sebuah komputer kantor terhubung ke jaringan Wi-Fi dan mendapatkan IP Address 169.254.12.45, namun tidak dapat membuka internet maupun server lokal. Penyebab paling tepat dari masalah tersebut adalah...',
@@ -388,12 +495,7 @@
             {
                 kode: 'b2', aspek: 'B.2 Kemampuan Pemecahan Masalah',
                 tanya: 'Perintah Command Prompt (CMD) yang paling tepat digunakan untuk menguji apakah koneksi dari komputer klien menuju server (misal IP 192.168.1.1) berjalan lancar tanpa packet loss adalah...',
-                opsi: [
-                    'ipconfig /release',
-                    'ping 192.168.1.1 -t',
-                    'netstat -a',
-                    'chkdsk /f'
-                ],
+                opsi: ['ipconfig /release', 'ping 192.168.1.1 -t', 'netstat -a', 'chkdsk /f'],
                 kunci: 1
             },
             {
@@ -408,7 +510,7 @@
                 kunci: 1
             },
 
-            // === B3: Kreativitas dan Adaptasi Teknologi ===
+            // B3: Kreativitas dan Adaptasi Teknologi
             {
                 kode: 'b3', aspek: 'B.3 Kreativitas dan Adaptasi Teknologi',
                 tanya: 'Instansi tempat PKL ingin mendigitalisasi arsip surat masuk agar dapat diakses bersama oleh beberapa bagian secara real-time dan aman. Solusi teknologi berbasis cloud yang paling efektif diterapkan adalah...',
@@ -444,7 +546,6 @@
             }
         ];
 
-        // Render 18 Soal ke Halaman
         function renderDaftarSoal() {
             const container = document.getElementById('container-soal');
             container.innerHTML = bankSoalPKL.map((item, idx) => {
@@ -474,7 +575,6 @@
             }).join('');
         }
 
-        // Fungsi Penentu Predikat Nilai (0 - 100)
         function hitungPredikat(nilai) {
             if (nilai >= 90) return 'Sangat Baik (A)';
             if (nilai >= 80) return 'Baik (B)';
@@ -482,7 +582,6 @@
             return 'Kurang (D)';
         }
 
-        // Proses Koreksi & Hitung Tabel Nilai PKL
         function prosesNilaiUjian(e) {
             e.preventDefault();
 
@@ -502,7 +601,6 @@
                 }
             });
 
-            // Konversi masing-masing indikator ke skala 0 - 100
             const nilaiIndikator = {};
             let totalNilai = 0;
             ['a1', 'a2', 'a3', 'b1', 'b2', 'b3'].forEach(k => {
@@ -521,7 +619,6 @@
             document.getElementById('val-rata').textContent = rataRata;
             document.getElementById('pred-akhir').textContent = predikatAkhir;
 
-            // Tampilkan Identitas pada Lembar Nilai
             document.getElementById('res-nama').textContent = nama;
             document.getElementById('res-nisn').textContent = nisn;
             document.getElementById('res-kelas').textContent = kelas;
@@ -530,30 +627,50 @@
                 dateStyle: 'full', timeStyle: 'short'
             }).format(new Date()) + ' WIT';
 
-            // Tampilkan Lembar Hasil & Gulir ke Bawah
             const hasilBox = document.getElementById('lembar-hasil-nilai');
             hasilBox.classList.remove('hidden');
             hasilBox.scrollIntoView({ behavior: 'smooth' });
 
-            // Kirim ringkasan hasil ujian ke Google Sheets (tab Pesan) agar guru pembimbing bisa memantau
-            const ringkasanNilai = `HASIL UJIAN PKL SMAN 1 MABA | Kelas: ${kelas} | Tempat PKL: ${instansi} | ` +
-                `A1(Disiplin): ${nilaiIndikator.a1}, A2(Kerjasama): ${nilaiIndikator.a2}, A3(Etika): ${nilaiIndikator.a3} | ` +
-                `B1(Materi): ${nilaiIndikator.b1}, B2(Problem Solving): ${nilaiIndikator.b2}, B3(Adaptasi Tech): ${nilaiIndikator.b3} | ` +
-                `Total: ${totalNilai} | Rata-rata: ${rataRata} (${predikatAkhir})`;
+            // Kirim ke Google Sheets
+            const statusBadge = document.getElementById('status-sync-sheets');
+            if (scriptURL.includes('TEMPEL_URL')) {
+                statusBadge.textContent = 'URL Sheets Belum Diisi';
+                return;
+            }
+
+            statusBadge.textContent = 'Menyimpan ke Google Sheets...';
+            statusBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold';
 
             fetch(scriptURL, {
                 method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'addContact',
-                    nama: `${nama} (NISN: ${nisn})`,
-                    kontak: kelas,
-                    kategori: 'Nilai Evaluasi PKL SMAN 1 Maba',
-                    pesan: ringkasanNilai
+                    action: 'submitNilai',
+                    nama: nama,
+                    nisn: nisn,
+                    kelas: kelas,
+                    instansi: instansi,
+                    a1: nilaiIndikator.a1,
+                    a2: nilaiIndikator.a2,
+                    a3: nilaiIndikator.a3,
+                    b1: nilaiIndikator.b1,
+                    b2: nilaiIndikator.b2,
+                    b3: nilaiIndikator.b3,
+                    total: totalNilai,
+                    rata: rataRata,
+                    predikat: predikatAkhir
                 })
-            }).catch(() => {});
+            }).then(() => {
+                statusBadge.textContent = 'Tersimpan di Google Sheets';
+                statusBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold';
+            }).catch(() => {
+                statusBadge.textContent = 'Gagal menyimpan (Cek koneksi)';
+                statusBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded bg-red-100 text-red-800 font-bold';
+            });
         }
 
-        // Timer Mundur 45 Menit
+        // Timer 45 Menit
         let sisaDetik = 45 * 60;
         setInterval(() => {
             if (sisaDetik <= 0) return;
@@ -563,7 +680,10 @@
             document.getElementById('timer-ujian').textContent = `${m}:${s}`;
         }, 1000);
 
-        window.onload = renderDaftarSoal;
+        window.onload = function() {
+            renderDaftarSoal();
+            muatLogoDariDatabase();
+        };
     </script>
 </body>
 </html>
