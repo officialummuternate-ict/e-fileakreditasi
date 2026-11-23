@@ -49,7 +49,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <div class="flex items-center gap-2 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 text-xs font-mono">
+                <div id="box-timer" class="hidden items-center gap-2 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 text-xs font-mono">
                     <i class="fa-regular fa-clock text-amber-400"></i>
                     <span id="timer-ujian">45:00</span>
                 </div>
@@ -61,41 +61,64 @@
         </div>
     </header>
 
-    <!-- MAIN CONTENT (AREA SISWA) -->
+    <!-- MAIN CONTENT -->
     <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full no-print">
 
-        <!-- 1. FORM BIODATA PESERTA PKL -->
-        <section id="section-biodata" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 mb-6">
+        <!-- 0. GERBANG VERIFIKASI NISN (TAMPIL PERTAMA KALI) -->
+        <section id="section-verifikasi" class="max-w-md mx-auto bg-white rounded-3xl p-7 sm:p-8 shadow-lg border border-slate-200 mt-4 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4 text-3xl border border-blue-200">
+                <i class="fa-solid fa-id-card"></i>
+            </div>
+            <h2 class="font-display font-extrabold text-xl text-slate-900">Verifikasi Peserta Ujian</h2>
+            <p class="text-xs text-slate-500 mt-1 mb-6">Masukkan 10 digit <strong>NISN</strong> Anda yang terdaftar untuk membuka lembar soal ujian PKL.</p>
+
+            <form onsubmit="verifikasiNISNSiswa(event)" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Nomor Induk Siswa Nasional (NISN) *</label>
+                    <input type="text" id="input-verif-nisn" required placeholder="Contoh: 0085786757" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 font-mono text-center text-base tracking-wider focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                </div>
+                <div id="verif-error-msg" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold text-center"></div>
+                <button type="submit" id="btn-verif-nisn" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-display font-bold text-sm shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Verifikasi &amp; Mulai Ujian</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- 1. FORM BIODATA PESERTA PKL (TERBUKA SETELAH NISN VALID) -->
+        <section id="section-biodata" class="hidden bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 mb-6">
             <div class="border-b border-slate-200 pb-4 mb-5 flex flex-wrap justify-between items-center gap-2">
                 <div>
-                    <h2 class="font-display font-bold text-xl text-slate-900">Identitas Peserta Ujian PKL</h2>
-                    <p class="text-xs text-slate-500">Setiap NISN / NIS hanya dapat mengikuti ujian <strong>1 kali</strong> dan tidak dapat diulang.</p>
+                    <h2 class="font-display font-bold text-xl text-slate-900">Identitas Peserta Terverifikasi</h2>
+                    <p class="text-xs text-slate-500">Lengkapi Kelas &amp; Tempat PKL lalu kerjakan 18 soal di bawah ini.</p>
                 </div>
-                <span class="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">18 Soal Pilihan Ganda</span>
+                <span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <i class="fa-solid fa-circle-check mr-1"></i> NISN Terverifikasi
+                </span>
             </div>
 
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Siswa *</label>
-                    <input type="text" id="siswa-nama" required placeholder="Contoh: Ahmad Fauzan" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Siswa</label>
+                    <input type="text" id="siswa-nama" readonly class="w-full px-3.5 py-2.5 rounded-xl bg-slate-200/70 border border-slate-300 font-bold text-slate-800 cursor-not-allowed">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">NISN / NIS *</label>
-                    <input type="text" id="siswa-nisn" required placeholder="10 Digit NISN" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 font-mono focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    <label class="block font-bold text-slate-700 mb-1">NISN</label>
+                    <input type="text" id="siswa-nisn" readonly class="w-full px-3.5 py-2.5 rounded-xl bg-slate-200/70 border border-slate-300 font-mono font-bold text-slate-800 cursor-not-allowed">
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">Kelas *</label>
-                    <input type="text" id="siswa-kelas" required placeholder="Contoh: XII IPA 1 / XII IPS 2" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    <input type="text" id="siswa-kelas" required placeholder="Contoh: XII IPA 1" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">Instansi / Tempat PKL *</label>
-                    <input type="text" id="siswa-instansi" required placeholder="Contoh: Dinas Kominfo Haltim" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    <input type="text" id="siswa-instansi" required placeholder="Contoh: UMMU / Kominfo" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
                 </div>
             </div>
         </section>
 
-        <!-- 2. DAFTAR SOAL UJIAN -->
-        <form id="form-ujian-pkl" onsubmit="prosesNilaiUjian(event)" class="space-y-6">
+        <!-- 2. DAFTAR SOAL UJIAN (TERBUKA SETELAH NISN VALID) -->
+        <form id="form-ujian-pkl" onsubmit="prosesNilaiUjian(event)" class="hidden space-y-6">
             <div id="container-soal" class="space-y-5"></div>
 
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -110,7 +133,7 @@
             </div>
         </form>
 
-        <!-- 3. RINGKASAN NILAI KHUSUS SISWA (HANYA TOTAL NILAI & RATA-RATA, TANPA PREDIKAT & TANPA TOMBOL ULANGI) -->
+        <!-- 3. RINGKASAN NILAI KHUSUS SISWA (HANYA TOTAL NILAI & RATA-RATA) -->
         <section id="ringkasan-hasil-siswa" class="hidden bg-white rounded-3xl p-6 sm:p-10 shadow-xl border-2 border-emerald-500/30 mt-8 max-w-2xl mx-auto text-center">
             <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-3xl">
                 <i class="fa-solid fa-circle-check"></i>
@@ -119,12 +142,12 @@
             <p class="text-xs text-slate-500 mt-1">Jawaban Anda telah terkunci dan tersimpan di database. Rincian lembar penilaian lengkap dikelola oleh Admin / Pembimbing.</p>
 
             <div class="mt-4">
-                <span id="status-sync-sheets" class="inline-block px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-800 font-bold">Tersimpan di Google Sheets</span>
+                <span class="inline-block px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-800 font-bold">Tersimpan di Google Sheets</span>
             </div>
 
             <div class="mt-6 bg-slate-50 rounded-2xl p-4 border border-slate-200 text-xs text-left grid sm:grid-cols-2 gap-2.5">
                 <div><span class="text-slate-500">Nama Peserta:</span> <strong id="s-nama" class="text-slate-900"></strong></div>
-                <div><span class="text-slate-500">NISN / NIS:</span> <strong id="s-nisn" class="font-mono text-slate-900"></strong></div>
+                <div><span class="text-slate-500">NISN:</span> <strong id="s-nisn" class="font-mono text-slate-900"></strong></div>
                 <div><span class="text-slate-500">Kelas:</span> <strong id="s-kelas" class="text-slate-900"></strong></div>
                 <div><span class="text-slate-500">Tempat PKL:</span> <strong id="s-instansi" class="text-blue-700"></strong></div>
             </div>
@@ -156,7 +179,7 @@
                     <i class="fa-solid fa-lock"></i>
                 </div>
                 <h3 class="font-display font-bold text-xl text-slate-900">Akses Khusus Admin</h3>
-                <p class="text-xs text-slate-500 mt-1 mb-5">Masukkan PIN Admin untuk melihat Lembar Penilaian Evaluasi PKL &amp; pengaturan logo.</p>
+                <p class="text-xs text-slate-500 mt-1 mb-5">Masukkan PIN Admin untuk melihat Lembar Penilaian, Kelola NISN Peserta &amp; Logo.</p>
                 <form onsubmit="verifikasiPinAdmin(event)" class="space-y-3">
                     <input type="password" id="admin-pin-input" required placeholder="Masukkan PIN Admin" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-center font-mono text-sm">
                     <button type="submit" id="btn-cek-pin" class="w-full py-3 rounded-xl bg-slate-900 hover:bg-blue-700 text-white font-bold text-sm transition">
@@ -172,21 +195,24 @@
                         <h3 class="font-display font-extrabold text-xl text-slate-900">Panel Admin Evaluasi PKL</h3>
                         <p class="text-xs text-slate-500">SMA Negeri 1 Maba • Database Google Sheets</p>
                     </div>
-                    <div class="flex gap-2">
-                        <button type="button" onclick="pindahTabAdmin('rekap')" id="tab-admin-rekap" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white">
-                            <i class="fa-solid fa-table-list mr-1"></i> Rekap &amp; Lembar Nilai
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="pindahTabAdmin('rekap')" id="tab-admin-rekap" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white">
+                            <i class="fa-solid fa-table-list mr-1"></i> Rekap Nilai
                         </button>
-                        <button type="button" onclick="pindahTabAdmin('logo')" id="tab-admin-logo" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
+                        <button type="button" onclick="pindahTabAdmin('peserta')" id="tab-admin-peserta" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
+                            <i class="fa-solid fa-users mr-1"></i> Kelola Peserta (NISN)
+                        </button>
+                        <button type="button" onclick="pindahTabAdmin('logo')" id="tab-admin-logo" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
                             <i class="fa-solid fa-image mr-1"></i> Ganti Logo
                         </button>
                     </div>
                 </div>
 
-                <!-- TAB 1: REKAP SEMUA SISWA -->
+                <!-- TAB 1: REKAP NILAI -->
                 <div id="admin-tab-rekap" class="no-print">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-xs font-semibold text-slate-600">Daftar Peserta yang Telah Menyelesaikan Ujian:</span>
-                        <button type="button" onclick="muatDataRekapAdmin()" class="text-xs font-bold text-blue-600 hover:underline">
+                        <button type="button" onclick="muatDataAdmin()" class="text-xs font-bold text-blue-600 hover:underline">
                             <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh Data
                         </button>
                     </div>
@@ -234,7 +260,7 @@
 
                     <div class="grid sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs mb-5">
                         <div><span class="text-slate-500">Nama Peserta:</span> <strong id="adm-nama" class="text-slate-900 text-sm"></strong></div>
-                        <div><span class="text-slate-500">NISN / NIS:</span> <strong id="adm-nisn" class="font-mono text-slate-900"></strong></div>
+                        <div><span class="text-slate-500">NISN:</span> <strong id="adm-nisn" class="font-mono text-slate-900"></strong></div>
                         <div><span class="text-slate-500">Kelas:</span> <strong id="adm-kelas" class="text-slate-900"></strong></div>
                         <div><span class="text-slate-500">Tempat PKL:</span> <strong id="adm-instansi" class="text-blue-800"></strong></div>
                     </div>
@@ -309,7 +335,38 @@
                     </div>
                 </div>
 
-                <!-- TAB 2: GANTI LOGO SEKOLAH -->
+                <!-- TAB 2: KELOLA PESERTA (NISN) -->
+                <div id="admin-tab-peserta" class="hidden space-y-5 no-print">
+                    <form onsubmit="tambahPesertaBaru(event)" class="p-4 rounded-2xl bg-slate-50 border grid sm:grid-cols-12 gap-3 items-end text-xs">
+                        <div class="sm:col-span-5">
+                            <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Siswa *</label>
+                            <input type="text" id="new-peserta-nama" required placeholder="Nama Siswa" class="w-full px-3 py-2 rounded-xl border bg-white">
+                        </div>
+                        <div class="sm:col-span-4">
+                            <label class="block font-bold text-slate-700 mb-1">NISN (10 Digit) *</label>
+                            <input type="text" id="new-peserta-nisn" required placeholder="008..." class="w-full px-3 py-2 rounded-xl border bg-white font-mono">
+                        </div>
+                        <div class="sm:col-span-3">
+                            <button type="submit" id="btn-add-peserta" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold">+ Tambah Peserta</button>
+                        </div>
+                    </form>
+
+                    <div class="overflow-x-auto border rounded-2xl">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-100 text-slate-700 border-b">
+                                <tr>
+                                    <th class="py-2.5 px-3 w-12 text-center">No</th>
+                                    <th class="py-2.5 px-3">Nama Peserta</th>
+                                    <th class="py-2.5 px-3">NISN Terdaftar</th>
+                                    <th class="py-2.5 px-3 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-peserta-admin" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 3: GANTI LOGO SEKOLAH -->
                 <div id="admin-tab-logo" class="hidden max-w-md mx-auto py-4 no-print">
                     <div class="flex flex-col items-center mb-4">
                         <img id="preview-logo-modal" src="https://placehold.co/100x100/1e3a8a/fbbf24?text=SMAN+1" class="app-logo w-24 h-24 rounded-full object-cover border-2 border-amber-400 shadow">
@@ -341,6 +398,8 @@
         let logoBase64SiapKirim = '';
         let pinAdminAktif = '';
         let dataRekapAdmin = [];
+        let dataPesertaAdmin = [];
+        let timerInterval = null;
 
         function muatLogoDariDatabase() {
             const cachedLogo = localStorage.getItem('sman1maba_pkl_logo');
@@ -360,6 +419,66 @@
                 .catch(() => {});
         }
 
+        // === VERIFIKASI NISN SEBELUM MEMBUKA SOAL ===
+        function verifikasiNISNSiswa(e) {
+            e.preventDefault();
+            const nisn = document.getElementById('input-verif-nisn').value.trim();
+            const errBox = document.getElementById('verif-error-msg');
+            const btn = document.getElementById('btn-verif-nisn');
+            const orig = btn.innerHTML;
+
+            errBox.classList.add('hidden');
+            if (scriptURL.includes('TEMPEL_URL')) {
+                errBox.textContent = 'URL Google Apps Script belum diatur oleh Admin.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa NISN...';
+
+            fetch(scriptURL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'verifyNISN', nisn: nisn })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    document.getElementById('siswa-nama').value = res.nama;
+                    document.getElementById('siswa-nisn').value = res.nisn;
+                    document.getElementById('section-verifikasi').classList.add('hidden');
+                    document.getElementById('section-biodata').classList.remove('hidden');
+                    document.getElementById('form-ujian-pkl').classList.remove('hidden');
+                    document.getElementById('box-timer').classList.replace('hidden', 'flex');
+                    renderDaftarSoal();
+                    mulaiTimerUjian();
+                } else {
+                    errBox.textContent = res.message || 'NISN tidak valid atau sudah pernah mengikuti ujian.';
+                    errBox.classList.remove('hidden');
+                }
+            })
+            .catch(() => {
+                errBox.textContent = 'Gagal terhubung ke server. Periksa koneksi internet Anda.';
+                errBox.classList.remove('hidden');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            });
+        }
+
+        function mulaiTimerUjian() {
+            let sisaDetik = 45 * 60;
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (sisaDetik <= 0) return;
+                sisaDetik--;
+                const m = String(Math.floor(sisaDetik / 60)).padStart(2, '0');
+                const s = String(sisaDetik % 60).padStart(2, '0');
+                document.getElementById('timer-ujian').textContent = `${m}:${s}`;
+            }, 1000);
+        }
+
         function tampilkanRingkasanSiswa(data) {
             document.getElementById('s-nama').textContent = data.nama;
             document.getElementById('s-nisn').textContent = data.nisn;
@@ -368,18 +487,17 @@
             document.getElementById('s-total').textContent = data.total;
             document.getElementById('s-rata').textContent = data.rata;
 
+            document.getElementById('section-verifikasi').classList.add('hidden');
             document.getElementById('form-ujian-pkl').classList.add('hidden');
             document.getElementById('section-biodata').classList.add('hidden');
             document.getElementById('ringkasan-hasil-siswa').classList.remove('hidden');
         }
 
-        // Cek apakah perangkat ini sudah pernah submit ujian (kunci anti-ulang)
         function cekStatusSudahUjian() {
             try {
                 const saved = localStorage.getItem('sman1maba_pkl_sudah_ujian');
                 if (saved) {
-                    const data = JSON.parse(saved);
-                    tampilkanRingkasanSiswa(data);
+                    tampilkanRingkasanSiswa(JSON.parse(saved));
                     return true;
                 }
             } catch (e) {}
@@ -392,7 +510,7 @@
             if (pinAdminAktif) {
                 document.getElementById('admin-login-box').classList.add('hidden');
                 document.getElementById('admin-content-box').classList.remove('hidden');
-                muatDataRekapAdmin();
+                muatDataAdmin();
             } else {
                 document.getElementById('admin-login-box').classList.remove('hidden');
                 document.getElementById('admin-content-box').classList.add('hidden');
@@ -400,21 +518,16 @@
             }
         }
 
-        function tutupModalAdmin() {
-            document.getElementById('modal-admin').classList.add('hidden');
-        }
+        function tutupModalAdmin() { document.getElementById('modal-admin').classList.add('hidden'); }
 
         function pindahTabAdmin(tab) {
-            document.getElementById('admin-tab-rekap').classList.toggle('hidden', tab !== 'rekap');
-            document.getElementById('admin-tab-logo').classList.toggle('hidden', tab !== 'logo');
+            ['rekap', 'peserta', 'logo'].forEach(t => {
+                document.getElementById(`admin-tab-${t}`).classList.toggle('hidden', t !== tab);
+                document.getElementById(`tab-admin-${t}`).className = t === tab
+                    ? 'px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white'
+                    : 'px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700';
+            });
             if (tab !== 'rekap') document.getElementById('lembar-cetak-admin').classList.add('hidden');
-
-            document.getElementById('tab-admin-rekap').className = tab === 'rekap'
-                ? 'px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white'
-                : 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700';
-            document.getElementById('tab-admin-logo').className = tab === 'logo'
-                ? 'px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white'
-                : 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700';
         }
 
         function verifikasiPinAdmin(e) {
@@ -428,16 +541,18 @@
 
             fetch(scriptURL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'getNilai', pin: pin })
+                body: JSON.stringify({ action: 'getAdminData', pin: pin })
             })
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
                     pinAdminAktif = pin;
-                    dataRekapAdmin = res.data || [];
+                    dataRekapAdmin = res.nilai || [];
+                    dataPesertaAdmin = res.peserta || [];
                     document.getElementById('admin-login-box').classList.add('hidden');
                     document.getElementById('admin-content-box').classList.remove('hidden');
                     renderTabelRekapAdmin();
+                    renderTabelPesertaAdmin();
                 } else {
                     alert(res.message || 'PIN Admin salah!');
                 }
@@ -449,19 +564,18 @@
             });
         }
 
-        function muatDataRekapAdmin() {
-            const tbody = document.getElementById('tbody-rekap-admin');
-            tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Memuat data dari Google Sheets...</td></tr>';
-
+        function muatDataAdmin() {
             fetch(scriptURL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'getNilai', pin: pinAdminAktif })
+                body: JSON.stringify({ action: 'getAdminData', pin: pinAdminAktif })
             })
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
-                    dataRekapAdmin = res.data || [];
+                    dataRekapAdmin = res.nilai || [];
+                    dataPesertaAdmin = res.peserta || [];
                     renderTabelRekapAdmin();
+                    renderTabelPesertaAdmin();
                 }
             });
         }
@@ -495,6 +609,61 @@
                     </td>
                 </tr>
             `).join('');
+        }
+
+        function renderTabelPesertaAdmin() {
+            const tbody = document.getElementById('tbody-peserta-admin');
+            if (!dataPesertaAdmin.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-slate-400">Belum ada peserta terdaftar.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = dataPesertaAdmin.map((p, i) => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2.5 px-3 text-center text-slate-500">${i + 1}</td>
+                    <td class="py-2.5 px-3 font-bold text-slate-900">${p.nama}</td>
+                    <td class="py-2.5 px-3 font-mono text-blue-700 font-semibold">${p.nisn}</td>
+                    <td class="py-2.5 px-3 text-right">
+                        <button type="button" onclick="hapusPeserta('${p.nisn}')" class="px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-600 text-red-700 hover:text-white font-bold text-[11px] transition">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function tambahPesertaBaru(e) {
+            e.preventDefault();
+            const nama = document.getElementById('new-peserta-nama').value.trim();
+            const nisn = document.getElementById('new-peserta-nisn').value.trim();
+            const btn = document.getElementById('btn-add-peserta');
+            btn.disabled = true;
+            btn.textContent = 'Menyimpan...';
+
+            fetch(scriptURL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'addPeserta', pin: pinAdminAktif, nama: nama, nisn: nisn })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    e.target.reset();
+                    muatDataAdmin();
+                } else {
+                    alert(res.message || 'Gagal menambah peserta.');
+                }
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = '+ Tambah Peserta';
+            });
+        }
+
+        function hapusPeserta(nisn) {
+            if (!confirm(`Hapus peserta dengan NISN ${nisn}?`)) return;
+            fetch(scriptURL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'deletePeserta', pin: pinAdminAktif, nisn: nisn })
+            })
+            .then(r => r.json())
+            .then(() => muatDataAdmin());
         }
 
         function bukaLembarAdmin(idx) {
@@ -531,13 +700,9 @@
                     const canvas = document.createElement('canvas');
                     const maxDim = 200;
                     let w = img.width, h = img.height;
-                    if (w > h) {
-                        if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-                    } else {
-                        if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-                    }
-                    canvas.width = w;
-                    canvas.height = h;
+                    if (w > h) { if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; } }
+                    else { if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; } }
+                    canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                     logoBase64SiapKirim = canvas.toDataURL('image/png', 0.8);
                     document.getElementById('preview-logo-modal').src = logoBase64SiapKirim;
@@ -550,19 +715,14 @@
         function simpanLogoKeDatabase(e) {
             e.preventDefault();
             if (!logoBase64SiapKirim) return alert('Silakan pilih file gambar logo terlebih dahulu.');
-
             const btn = document.getElementById('btn-simpan-logo');
             const orig = btn.textContent;
             btn.disabled = true;
-            btn.textContent = 'Menyimpan ke Database...';
+            btn.textContent = 'Menyimpan...';
 
             fetch(scriptURL, {
                 method: 'POST',
-                body: JSON.stringify({
-                    action: 'updateLogo',
-                    pin: pinAdminAktif,
-                    logoWeb: logoBase64SiapKirim
-                })
+                body: JSON.stringify({ action: 'updateLogo', pin: pinAdminAktif, logoWeb: logoBase64SiapKirim })
             })
             .then(res => res.json())
             .then(data => {
@@ -574,11 +734,7 @@
                     alert(data.message || 'Gagal menyimpan logo.');
                 }
             })
-            .catch(() => alert('Gagal terhubung ke Google Sheets.'))
-            .finally(() => {
-                btn.disabled = false;
-                btn.textContent = orig;
-            });
+            .finally(() => { btn.disabled = false; btn.textContent = orig; });
         }
 
         // === BANK SOAL TERSTRUKTUR (18 SOAL) ===
@@ -812,20 +968,15 @@
             const kelas = document.getElementById('siswa-kelas').value.trim();
             const instansi = document.getElementById('siswa-instansi').value.trim();
 
-            if (!nama || !nisn || !kelas || !instansi) {
-                alert('Harap lengkapi seluruh biodata di bagian atas terlebih dahulu.');
-                return;
-            }
-
-            if (scriptURL.includes('TEMPEL_URL')) {
-                alert('URL Google Apps Script belum diisi oleh Admin.');
+            if (!kelas || !instansi) {
+                alert('Harap isi Kelas dan Instansi / Tempat PKL terlebih dahulu.');
                 return;
             }
 
             const btn = document.getElementById('btn-selesai-ujian');
             const orig = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi NISN &amp; Menyimpan...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan Jawaban...';
 
             const skorBenar = { a1: 0, a2: 0, a3: 0, b1: 0, b2: 0, b3: 0 };
             const jumlahSoal = { a1: 0, a2: 0, a3: 0, b1: 0, b2: 0, b3: 0 };
@@ -849,69 +1000,45 @@
             const rataRata = (totalNilai / 6).toFixed(2);
             const predikatAkhir = hitungPredikat(parseFloat(rataRata));
 
-            const payload = {
-                action: 'submitNilai',
-                nama: nama,
-                nisn: nisn,
-                kelas: kelas,
-                instansi: instansi,
-                a1: nilaiIndikator.a1,
-                a2: nilaiIndikator.a2,
-                a3: nilaiIndikator.a3,
-                b1: nilaiIndikator.b1,
-                b2: nilaiIndikator.b2,
-                b3: nilaiIndikator.b3,
-                total: totalNilai,
-                rata: rataRata,
-                predikat: predikatAkhir
-            };
-
             fetch(scriptURL, {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    action: 'submitNilai',
+                    nama: nama, nisn: nisn, kelas: kelas, instansi: instansi,
+                    a1: nilaiIndikator.a1, a2: nilaiIndikator.a2, a3: nilaiIndikator.a3,
+                    b1: nilaiIndikator.b1, b2: nilaiIndikator.b2, b3: nilaiIndikator.b3,
+                    total: totalNilai, rata: rataRata, predikat: predikatAkhir
+                })
             })
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'duplicate') {
-                    alert(res.message || 'NISN / NIS ini sudah pernah mengikuti ujian dan tidak dapat mengulang!');
+                    alert(res.message);
                     btn.disabled = false;
                     btn.innerHTML = orig;
                     return;
                 }
-
                 if (res.status === 'success') {
                     const ringkasan = { nama, nisn, kelas, instansi, total: totalNilai, rata: rataRata };
                     localStorage.setItem('sman1maba_pkl_sudah_ujian', JSON.stringify(ringkasan));
                     tampilkanRingkasanSiswa(ringkasan);
                     document.getElementById('ringkasan-hasil-siswa').scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    alert('Gagal menyimpan: ' + (res.message || 'Terjadi kesalahan server.'));
+                    alert('Gagal menyimpan: ' + (res.message || 'Kesalahan server.'));
                     btn.disabled = false;
                     btn.innerHTML = orig;
                 }
             })
             .catch(() => {
-                alert('Koneksi ke Google Sheets gagal. Pastikan internet stabil lalu coba kirim kembali.');
+                alert('Koneksi ke Google Sheets gagal. Silakan coba kirim kembali.');
                 btn.disabled = false;
                 btn.innerHTML = orig;
             });
         }
 
-        // Timer 45 Menit
-        let sisaDetik = 45 * 60;
-        setInterval(() => {
-            if (sisaDetik <= 0) return;
-            sisaDetik--;
-            const m = String(Math.floor(sisaDetik / 60)).padStart(2, '0');
-            const s = String(sisaDetik % 60).padStart(2, '0');
-            document.getElementById('timer-ujian').textContent = `${m}:${s}`;
-        }, 1000);
-
         window.onload = function() {
             muatLogoDariDatabase();
-            if (!cekStatusSudahUjian()) {
-                renderDaftarSoal();
-            }
+            cekStatusSudahUjian();
         };
     </script>
 </body>
