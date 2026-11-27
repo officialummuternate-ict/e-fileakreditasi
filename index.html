@@ -12,6 +12,8 @@
         .glass-nav { background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(10px); }
         .modal { transition: opacity 0.2s ease; }
         body.modal-active { overflow: hidden; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @media print {
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
@@ -25,8 +27,10 @@
     <nav class="glass-nav text-white shadow-lg sticky top-0 z-40 border-b border-slate-800">
         <div class="container mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center max-w-7xl gap-2">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-extrabold text-lg shadow-md border border-blue-400/30 shrink-0">
-                    <i class="fas fa-folder-open"></i>
+                <!-- LOGO DINAMIS DARI GOOGLE SHEETS -->
+                <div class="w-11 h-11 bg-white/10 rounded-xl flex items-center justify-center overflow-hidden shadow-md border border-white/20 shrink-0 p-1">
+                    <img id="navLogoImg" src="" alt="Logo Kampus" class="hidden w-full h-full object-contain rounded-lg bg-white p-0.5">
+                    <i id="navLogoFallback" class="fas fa-folder-open text-blue-400 text-lg"></i>
                 </div>
                 <div>
                     <span class="text-sm sm:text-lg font-extrabold tracking-wide block leading-none">E-FILE AKREDITASI</span>
@@ -35,13 +39,12 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <!-- Status Koneksi Google Sheets -->
                 <span id="dbStatusBadge" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-800 border border-slate-700 text-slate-300">
                     <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
                     <span id="dbStatusText">Menghubungkan...</span>
                 </span>
 
-                <button onclick="loadDataFromCloud(true)" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="Muat Ulang Data dari Google Sheets">
+                <button onclick="loadDataFromCloud(true)" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="Muat Ulang Data">
                     <i class="fas fa-sync-alt"></i>
                 </button>
 
@@ -63,11 +66,11 @@
             <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div class="max-w-2xl">
                     <span class="inline-block px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[11px] font-bold uppercase tracking-wider mb-3">
-                        <i class="fas fa-cloud-download-alt mr-1"></i> Repositori Publik Bukti Dukung Akreditasi
+                        <i class="fas fa-folder-tree mr-1"></i> Arsip Akreditasi per Program Studi & Tahun Terbit
                     </span>
                     <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Sistem E-File Akreditasi Kampus</h1>
                     <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                        Akses dan unduh langsung dokumen SK, Sertifikat Akreditasi, LED, LKPS, dan bukti dukung Kriteria 1–9 secara terpusat dari database Google Sheets & Google Drive.
+                        Repositori dokumen akreditasi BAN-PT / LAM yang dikelompokkan rapi berdasarkan <b>Program Studi</b> dan <b>Tahun Terbit</b>. Seluruh berkas tersimpan di Google Sheets & Google Drive untuk akses unduh publik.
                     </p>
                 </div>
                 <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 w-full md:w-64 shrink-0">
@@ -96,6 +99,13 @@
                 </div>
             </div>
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-graduation-cap"></i></div>
+                <div>
+                    <div class="text-2xl font-extrabold text-slate-800" id="statProdiCount">0</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Program Studi</div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3.5">
                 <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-check-double"></i></div>
                 <div>
                     <div class="text-2xl font-extrabold text-slate-800" id="statValid">0</div>
@@ -103,34 +113,30 @@
                 </div>
             </div>
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3.5">
-                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-clock"></i></div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-calendar-alt"></i></div>
                 <div>
-                    <div class="text-2xl font-extrabold text-slate-800" id="statReview">0</div>
-                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Draft / Revisi</div>
-                </div>
-            </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3.5">
-                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-layer-group"></i></div>
-                <div>
-                    <div class="text-2xl font-extrabold text-slate-800" id="statKriteriaCount">0/10</div>
-                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kategori Terisi</div>
+                    <div class="text-2xl font-extrabold text-slate-800" id="statYearCount">0</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tahun Terbit</div>
                 </div>
             </div>
         </section>
 
         <!-- PANEL AKSI ADMIN -->
         <section id="adminActionPanel" class="hidden bg-white p-5 rounded-2xl shadow-sm border-l-4 border-blue-600 space-y-3">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
                 <div>
                     <span class="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[10px] font-extrabold uppercase">Panel Admin Tim Akreditasi</span>
-                    <h2 class="text-sm font-extrabold text-slate-800 mt-1">Kelola Dokumen E-File & Database Google Sheets</h2>
+                    <h2 class="text-sm font-extrabold text-slate-800 mt-1">Kelola Dokumen, Logo Kampus & Database Google Sheets</h2>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <button onclick="openDocModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
                         <i class="fas fa-cloud-upload-alt"></i> Tambah / Upload E-File
                     </button>
+                    <button onclick="openLogoModal()" class="bg-violet-600 hover:bg-violet-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+                        <i class="fas fa-image"></i> Ganti Logo
+                    </button>
                     <button onclick="openSettingsModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
-                        <i class="fas fa-database"></i> Pengaturan Google Sheets
+                        <i class="fas fa-database"></i> URL Google Sheets
                     </button>
                     <label class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow cursor-pointer transition flex items-center gap-1.5">
                         <i class="fas fa-file-import"></i> Import Excel
@@ -146,67 +152,87 @@
             </div>
         </section>
 
-        <!-- FILTER & PENCARIAN -->
-        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <!-- NAVIGASI CEPAT PROGRAM STUDI (PILLS) -->
+        <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold text-slate-600 uppercase tracking-wider"><i class="fas fa-university text-blue-600 mr-1.5"></i>Pilih Program Studi / Unit</span>
+                <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button id="btnViewFolder" onclick="switchViewMode('folder')" class="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-blue-600 text-white shadow-sm transition flex items-center gap-1.5">
+                        <i class="fas fa-folder-tree"></i> Per Prodi & Tahun
+                    </button>
+                    <button id="btnViewTable" onclick="switchViewMode('table')" class="px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+                        <i class="fas fa-table"></i> Mode Tabel
+                    </button>
+                </div>
+            </div>
+            <div id="prodiPillsContainer" class="flex gap-2 overflow-x-auto no-scrollbar pb-1"></div>
+        </section>
+
+        <!-- FILTER LENGKAP -->
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div class="lg:col-span-2">
-                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Cari Dokumen / Kode / Unit</label>
+                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Cari Dokumen / Kode</label>
                 <div class="relative">
                     <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                    <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Ketik nama dokumen, kode (K1-01), atau prodi..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="text" id="searchInput" onkeyup="renderDocuments()" placeholder="Ketik judul, kode SK, atau keterangan..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
             </div>
             <div>
-                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Kriteria / Kategori</label>
-                <select id="filterKriteria" onchange="renderTable()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="all">Semua Kriteria</option>
-                    <option value="SK & Sertifikat">SK & Sertifikat Akreditasi</option>
-                    <option value="Kriteria 1">Kriteria 1: VMTS</option>
-                    <option value="Kriteria 2">Kriteria 2: Tata Pamong & Kerja Sama</option>
-                    <option value="Kriteria 3">Kriteria 3: Mahasiswa</option>
-                    <option value="Kriteria 4">Kriteria 4: Sumber Daya Manusia</option>
-                    <option value="Kriteria 5">Kriteria 5: Keuangan, Sarana & Prasarana</option>
-                    <option value="Kriteria 6">Kriteria 6: Pendidikan</option>
-                    <option value="Kriteria 7">Kriteria 7: Penelitian</option>
-                    <option value="Kriteria 8">Kriteria 8: Pengabdian Masyarakat</option>
-                    <option value="Kriteria 9">Kriteria 9: Luaran & Capaian Tridharma</option>
+                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Program Studi</label>
+                <select id="filterProdi" onchange="renderDocuments()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all">Semua Program Studi</option>
                 </select>
             </div>
             <div>
-                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Status Validasi</label>
-                <select id="filterStatus" onchange="renderTable()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="all">Semua Status</option>
-                    <option value="Valid">Valid / Siap AL</option>
-                    <option value="Perlu Revisi">Perlu Revisi</option>
-                    <option value="Draft">Draft</option>
+                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Tahun Terbit</label>
+                <select id="filterTahun" onchange="renderDocuments()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all">Semua Tahun</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Kriteria</label>
+                <select id="filterKriteria" onchange="renderDocuments()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all">Semua Kriteria</option>
+                    <option value="SK & Sertifikat">SK & Sertifikat Akreditasi</option>
+                    <option value="Kriteria 1">Kriteria 1: VMTS</option>
+                    <option value="Kriteria 2">Kriteria 2: Tata Pamong</option>
+                    <option value="Kriteria 3">Kriteria 3: Mahasiswa</option>
+                    <option value="Kriteria 4">Kriteria 4: SDM</option>
+                    <option value="Kriteria 5">Kriteria 5: Keuangan & Sarpras</option>
+                    <option value="Kriteria 6">Kriteria 6: Pendidikan</option>
+                    <option value="Kriteria 7">Kriteria 7: Penelitian</option>
+                    <option value="Kriteria 8">Kriteria 8: Pengabdian</option>
+                    <option value="Kriteria 9">Kriteria 9: Luaran Tridharma</option>
                 </select>
             </div>
             <div class="flex items-end">
                 <button onclick="resetFilters()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
-                    <i class="fas fa-undo"></i> Reset Filter
+                    <i class="fas fa-undo"></i> Reset
                 </button>
             </div>
         </section>
 
-        <!-- TABEL DOKUMEN E-FILE -->
-        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50">
-                <div>
-                    <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Daftar Induk E-File Akreditasi (Akses Publik)</h3>
-                    <p class="text-[11px] text-slate-500">Klik <b>Lihat</b> untuk pratinjau langsung atau klik <b>Unduh</b> untuk mengunduh berkas.</p>
-                </div>
-                <span class="text-xs font-bold text-slate-600">Menampilkan <strong id="countShown" class="text-blue-600">0</strong> dari <strong id="countTotal">0</strong> berkas</span>
-            </div>
+        <!-- HEADER HASIL -->
+        <div class="flex justify-between items-center px-1">
+            <span class="text-xs font-extrabold text-slate-700 uppercase tracking-wider" id="resultHeading">Arsip E-File per Program Studi & Tahun Terbit</span>
+            <span class="text-xs font-bold text-slate-500">Menampilkan <strong id="countShown" class="text-blue-600">0</strong> dari <strong id="countTotal">0</strong> berkas</span>
+        </div>
 
+        <!-- MODE 1: TAMPILAN FOLDER TERPISAH PER PRODI & TAHUN TERBIT -->
+        <section id="folderViewContainer" class="space-y-6"></section>
+
+        <!-- MODE 2: TAMPILAN TABEL LENGKAP -->
+        <section id="tableViewContainer" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200 text-xs">
                     <thead class="bg-slate-900 text-white uppercase text-[10px] tracking-wider font-extrabold">
                         <tr>
-                            <th class="px-4 py-3.5 text-left">Kode & Tahun</th>
-                            <th class="px-4 py-3.5 text-left">Kriteria</th>
+                            <th class="px-4 py-3.5 text-left">Program Studi</th>
+                            <th class="px-4 py-3.5 text-center">Tahun Terbit</th>
+                            <th class="px-4 py-3.5 text-left">Kode & Kriteria</th>
                             <th class="px-4 py-3.5 text-left">Nama Dokumen & Keterangan</th>
-                            <th class="px-4 py-3.5 text-left">Unit / Prodi</th>
                             <th class="px-4 py-3.5 text-center">Status</th>
-                            <th class="px-4 py-3.5 text-center">Aksi Publik & Admin</th>
+                            <th class="px-4 py-3.5 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="docTableBody" class="divide-y divide-slate-100 bg-white"></tbody>
@@ -226,10 +252,34 @@
             <form id="docForm" class="p-6 space-y-4 text-xs overflow-y-auto">
                 <input type="hidden" id="docId">
 
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Program Studi / Institusi *</label>
+                        <input type="text" id="docProdi" list="prodiListOptions" required placeholder="Pilih atau ketik Program Studi..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
+                        <datalist id="prodiListOptions">
+                            <option value="Institusi UMMU (APT)">
+                            <option value="Informatika">
+                            <option value="Teknik Sipil">
+                            <option value="Teknik Pertambangan">
+                            <option value="Akuntansi">
+                            <option value="Manajemen">
+                            <option value="Kesehatan Masyarakat">
+                            <option value="Ilmu Pemerintahan">
+                            <option value="Ilmu Komunikasi">
+                            <option value="Agroteknologi">
+                            <option value="Pendidikan Bahasa Inggris">
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Tahun Terbit Dokumen *</label>
+                        <input type="number" id="docTahunTerbit" required min="1995" max="2035" value="2026" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     <div>
                         <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Kode Dokumen *</label>
-                        <input type="text" id="docKode" required placeholder="Contoh: K1-001" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none">
+                        <input type="text" id="docKode" required placeholder="Contoh: SK-IF-2026" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
                         <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Kriteria / Kategori *</label>
@@ -247,22 +297,6 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Tahun Dokumen *</label>
-                        <input type="number" id="docTahun" required min="2000" max="2035" value="2026" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Judul / Nama Dokumen E-File *</label>
-                    <input type="text" id="docJudul" required placeholder="Contoh: SK & Sertifikat Akreditasi Institusi UMMU" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Unit / Fakultas / Prodi *</label>
-                        <input type="text" id="docUnit" required placeholder="Contoh: LPM / Prodi Informatika" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
                         <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Status Validasi *</label>
                         <select id="docStatus" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
                             <option value="Valid">Valid / Siap AL</option>
@@ -272,10 +306,15 @@
                     </div>
                 </div>
 
-                <!-- PILIHAN SUMBER FILE: UPLOAD LANGSUNG ATAU LINK -->
+                <div>
+                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Judul / Nama Dokumen E-File *</label>
+                    <input type="text" id="docJudul" required placeholder="Contoh: Sertifikat Akreditasi Prodi Informatika (LAM INFOKOM)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- PILIHAN SUMBER FILE -->
                 <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-extrabold text-blue-900 uppercase">Sumber Berkas E-File (Pilih Salah Satu)</span>
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <span class="text-[11px] font-extrabold text-blue-900 uppercase">Sumber Berkas E-File</span>
                         <div class="flex gap-1.5">
                             <button type="button" id="btnModeUpload" onclick="switchSourceMode('upload')" class="px-3 py-1 rounded-lg text-[10px] font-bold bg-blue-600 text-white">Upload File ke Drive</button>
                             <button type="button" id="btnModeLink" onclick="switchSourceMode('link')" class="px-3 py-1 rounded-lg text-[10px] font-bold bg-white text-slate-600 border border-slate-200">Tempel Link URL</button>
@@ -285,26 +324,26 @@
                     <div id="sourceUploadBox">
                         <input type="file" id="docFileUpload" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" class="w-full bg-white border border-blue-200 rounded-xl p-2 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
                         <p class="text-[10px] text-slate-500 mt-1.5">
-                            <i class="fas fa-info-circle text-blue-500"></i> Maksimal <b>10 MB</b> (PDF/Word/Excel/Gambar). File otomatis masuk Google Drive publik & link download langsung dibuatkan di Google Sheets.
+                            <i class="fas fa-folder-plus text-blue-500"></i> Otomatis tersimpan ke folder Drive <b>Prodi / Tahun Terbit</b> (Maks. 10 MB) & siap diunduh publik.
                         </p>
                     </div>
 
                     <div id="sourceLinkBox" class="hidden">
                         <input type="url" id="docUrl" placeholder="https://drive.google.com/file/d/.../view" class="w-full bg-white border border-blue-200 rounded-xl p-2.5 font-mono text-[11px] focus:ring-2 focus:ring-blue-500 outline-none">
                         <p class="text-[10px] text-slate-500 mt-1.5">
-                            Cocok untuk file besar (&gt;10 MB). Pastikan link Google Drive diset ke <b>"Siapa saja yang memiliki link"</b> agar publik bisa mengunduh.
+                            Pastikan tautan Google Drive memiliki akses <b>"Siapa saja yang memiliki link"</b>.
                         </p>
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Keterangan / Nomor SK (Opsional)</label>
-                    <textarea id="docKet" rows="2" placeholder="Catatan singkat, nomor SK, atau masa berlaku dokumen..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                    <textarea id="docKet" rows="2" placeholder="Nomor SK, peringkat akreditasi (Baik Sekali/Unggul), atau masa berlaku..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
                     <button type="button" onclick="toggleModal('docModal')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">Batal</button>
-                    <button type="submit" id="btnSubmitDoc" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow flex items-center gap-1.5">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow flex items-center gap-1.5">
                         <i class="fas fa-save"></i> Simpan ke Google Sheets
                     </button>
                 </div>
@@ -312,7 +351,52 @@
         </div>
     </div>
 
-    <!-- MODAL PENGATURAN GOOGLE SHEETS API -->
+    <!-- MODAL GANTI LOGO KAMPUS (TERSIMPAN KE GOOGLE SHEETS) -->
+    <div id="logoModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="toggleModal('logoModal')"></div>
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl z-50 overflow-hidden">
+            <div class="bg-violet-700 px-6 py-4 text-white flex justify-between items-center">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider"><i class="fas fa-image mr-2"></i>Ganti Logo Portal (Google Sheets)</h3>
+                <button onclick="toggleModal('logoModal')" class="text-violet-200 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 text-xs">
+                <div class="flex flex-col items-center justify-center p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl">
+                    <img id="logoPreviewImg" src="" alt="Preview Logo" class="hidden w-24 h-24 object-contain rounded-xl bg-white p-1.5 shadow-sm border border-slate-200 mb-2">
+                    <div id="logoPreviewEmpty" class="w-20 h-20 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400 text-2xl mb-2">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-500">Pratinjau Logo Kampus</span>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Upload Gambar Logo (PNG / JPG / WEBP)</label>
+                    <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoFileChange(event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-violet-600 file:text-white hover:file:bg-violet-700">
+                    <p class="text-[10px] text-slate-400 mt-1">Gambar otomatis dikompresi agar langsung tersimpan rapi di sel Google Sheets & tampil ke semua pengunjung.</p>
+                </div>
+
+                <div class="relative flex items-center py-1">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="mx-3 text-[10px] font-bold text-slate-400 uppercase">atau pakai URL gambar</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">URL Gambar Logo</label>
+                    <input type="url" id="logoUrlInput" oninput="previewLogoUrl(this.value)" placeholder="https://.../logo-ummu.png" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono text-[11px] outline-none focus:ring-2 focus:ring-violet-500">
+                </div>
+
+                <div class="flex justify-between items-center pt-3 border-t border-slate-100">
+                    <button type="button" onclick="resetLogoToDefault()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold">Reset Default</button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="toggleModal('logoModal')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">Batal</button>
+                        <button type="button" onclick="saveLogoToCloud()" class="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold shadow">Simpan Logo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PENGATURAN URL GOOGLE SHEETS -->
     <div id="settingsModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-50 p-4">
         <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="toggleModal('settingsModal')"></div>
         <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl z-50 overflow-hidden">
@@ -322,7 +406,7 @@
             </div>
             <div class="p-6 space-y-4 text-xs">
                 <p class="text-slate-600 leading-relaxed">
-                    Masukkan <b>Web App URL Google Apps Script</b> (berakhiran <code class="bg-slate-100 px-1 rounded">/exec</code>). Agar semua pengunjung publik otomatis terhubung, pastikan URL yang sama juga ditempel di variabel <code class="bg-slate-100 px-1 rounded">DEFAULT_GAS_URL</code> pada file <code class="bg-slate-100 px-1 rounded">index.html</code> di GitHub.
+                    Masukkan <b>Web App URL Google Apps Script</b> (berakhiran <code class="bg-slate-100 px-1 rounded">/exec</code>). Agar semua pengunjung publik otomatis terhubung, tempelkan URL yang sama di variabel <code class="bg-slate-100 px-1 rounded">DEFAULT_GAS_URL</code> pada file <code class="bg-slate-100 px-1 rounded">index.html</code> di GitHub.
                 </p>
                 <div>
                     <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">URL Google Apps Script Web App</label>
@@ -366,7 +450,10 @@
     <!-- FOOTER -->
     <footer class="bg-slate-900 text-slate-400 py-5 border-t border-slate-800 mt-10">
         <div class="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row justify-between items-center text-xs gap-2 text-center sm:text-left">
-            <p>&copy; 2026 <strong>E-File Akreditasi Kampus</strong> — Universitas Muhammadiyah Maluku Utara.</p>
+            <div class="flex items-center gap-2.5">
+                <img id="footerLogoImg" src="" alt="Logo" class="hidden w-6 h-6 object-contain rounded bg-white p-0.5">
+                <p>&copy; 2026 <strong>E-File Akreditasi Kampus</strong> — Universitas Muhammadiyah Maluku Utara.</p>
+            </div>
             <p class="text-[11px] text-slate-500">GitHub Pages + Google Sheets Database</p>
         </div>
     </footer>
@@ -377,12 +464,17 @@
         // =========================================================================
         const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyT0c7bnNrSdpu3FwLEWsKdXECOQ7yjd-0ypwW1hTD1l6U-kmr_IlGshNZoXBKKs8aj/exec'; // Contoh: 'https://script.google.com/macros/s/AKfycb.../exec'
 
-        const STORAGE_KEY = 'ummu_efile_akreditasi_cache_v2';
-        const GAS_URL_KEY = 'ummu_efile_gas_url_v2';
+        const STORAGE_KEY = 'ummu_efile_akreditasi_v3';
+        const LOGO_STORAGE_KEY = 'ummu_efile_logo_v3';
+        const GAS_URL_KEY = 'ummu_efile_gas_url_v3';
 
         let gasWebAppUrl = localStorage.getItem(GAS_URL_KEY) || DEFAULT_GAS_URL;
         let isAdmin = sessionStorage.getItem('ummu_akreditasi_admin') === 'true';
         let sourceMode = 'upload';
+        let viewMode = 'folder'; // 'folder' (per prodi & tahun) atau 'table'
+        let currentLogoData = localStorage.getItem(LOGO_STORAGE_KEY) || '';
+        let pendingLogoData = '';
+
         let documents = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
         function updateDbStatus(state, text) {
@@ -395,10 +487,34 @@
             );
         }
 
-        // TARIK DATA DARI GOOGLE SHEETS (PUBLIK & ADMIN)
+        function applyLogoToUI(logoVal) {
+            currentLogoData = logoVal || '';
+            localStorage.setItem(LOGO_STORAGE_KEY, currentLogoData);
+
+            const navImg = document.getElementById('navLogoImg');
+            const navFallback = document.getElementById('navLogoFallback');
+            const footerImg = document.getElementById('footerLogoImg');
+
+            if (currentLogoData) {
+                navImg.src = currentLogoData;
+                navImg.classList.remove('hidden');
+                navFallback.classList.add('hidden');
+                footerImg.src = currentLogoData;
+                footerImg.classList.remove('hidden');
+            } else {
+                navImg.src = '';
+                navImg.classList.add('hidden');
+                navFallback.classList.remove('hidden');
+                footerImg.src = '';
+                footerImg.classList.add('hidden');
+            }
+        }
+
+        // TARIK DATA DOKUMEN & LOGO DARI GOOGLE SHEETS
         async function loadDataFromCloud(showToast = false) {
             if (!gasWebAppUrl) {
                 updateDbStatus('local', 'Database Belum Diset (Lokal)');
+                applyLogoToUI(currentLogoData);
                 updateUI();
                 return;
             }
@@ -408,25 +524,34 @@
                 const res = await fetch(gasWebAppUrl);
                 const result = await res.json();
 
-                if (result.status === 'success' && Array.isArray(result.data)) {
-                    documents = result.data;
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+                if (result.status === 'success') {
+                    if (Array.isArray(result.data)) {
+                        documents = result.data.map(d => ({
+                            ...d,
+                            prodi: d.prodi || d.unit || 'Institusi UMMU',
+                            tahun_terbit: String(d.tahun_terbit || d.tahun || new Date().getFullYear())
+                        }));
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+                    }
+                    if (result.settings && result.settings.app_logo !== undefined) {
+                        applyLogoToUI(result.settings.app_logo);
+                    }
                     updateDbStatus('connected', 'Google Sheets Terhubung');
                     updateUI();
                     if (showToast) {
-                        Swal.fire({ icon: 'success', title: 'Data Diperbarui', text: `${documents.length} dokumen dimuat dari Google Sheets.`, timer: 1300, showConfirmButton: false });
+                        Swal.fire({ icon: 'success', title: 'Tersinkronisasi', text: `${documents.length} dokumen & logo dimuat dari Google Sheets.`, timer: 1300, showConfirmButton: false });
                     }
                 }
             } catch (err) {
-                updateDbStatus('local', 'Gagal Koneksi / Cache Lokal');
+                updateDbStatus('local', 'Offline / Cache Lokal');
+                applyLogoToUI(currentLogoData);
                 updateUI();
                 if (showToast) {
-                    Swal.fire('Gagal Terhubung', 'Pastikan URL Google Apps Script benar dan izin akses diset ke "Siapa saja (Anyone)".', 'error');
+                    Swal.fire('Gagal Terhubung', 'Periksa URL Google Apps Script dan pastikan akses diset ke "Siapa saja (Anyone)".', 'error');
                 }
             }
         }
 
-        // KIRIM DATA KE GOOGLE SHEETS
         async function pushToGoogleSheets(action, payloadObj) {
             if (!gasWebAppUrl) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
@@ -466,115 +591,288 @@
             }
 
             updateStats();
-            renderTable();
+            populateDynamicFilters();
+            renderDocuments();
         }
 
         function updateStats() {
             const total = documents.length;
             const valid = documents.filter(d => d.status === 'Valid').length;
-            const review = total - valid;
-            const uniqueKriteria = new Set(documents.map(d => d.kriteria)).size;
+            const uniqueProdi = new Set(documents.map(d => d.prodi || 'Institusi UMMU')).size;
+            const uniqueYear = new Set(documents.map(d => d.tahun_terbit || '2026')).size;
             const percent = total > 0 ? Math.round((valid / total) * 100) : 0;
 
             document.getElementById('statTotal').innerText = total;
+            document.getElementById('statProdiCount').innerText = uniqueProdi;
             document.getElementById('statValid').innerText = valid;
-            document.getElementById('statReview').innerText = review;
-            document.getElementById('statKriteriaCount').innerText = `${uniqueKriteria}/10`;
+            document.getElementById('statYearCount').innerText = uniqueYear;
             document.getElementById('readinessPercent').innerText = `${percent}%`;
             document.getElementById('readinessBar').style.width = `${percent}%`;
             document.getElementById('readinessText').innerText = `${valid} dari ${total} dokumen tervalidasi`;
         }
 
+        function populateDynamicFilters() {
+            const prodiSelect = document.getElementById('filterProdi');
+            const tahunSelect = document.getElementById('filterTahun');
+            const currentProdi = prodiSelect.value;
+            const currentTahun = tahunSelect.value;
+
+            const prodis = [...new Set(documents.map(d => d.prodi || 'Institusi UMMU'))].sort();
+            const years = [...new Set(documents.map(d => String(d.tahun_terbit || '2026')))].sort((a, b) => b.localeCompare(a));
+
+            prodiSelect.innerHTML = '<option value="all">Semua Program Studi</option>' +
+                prodis.map(p => `<option value="${p}">${p}</option>`).join('');
+            if (prodis.includes(currentProdi)) prodiSelect.value = currentProdi;
+
+            tahunSelect.innerHTML = '<option value="all">Semua Tahun Terbit</option>' +
+                years.map(y => `<option value="${y}">Tahun ${y}</option>`).join('');
+            if (years.includes(currentTahun)) tahunSelect.value = currentTahun;
+
+            // Render Bar Pills Program Studi
+            const pillsBox = document.getElementById('prodiPillsContainer');
+            const activeProdi = prodiSelect.value;
+            let pillsHtml = `
+                <button onclick="selectProdiPill('all')" class="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${activeProdi === 'all' ? 'bg-slate-900 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}">
+                    <i class="fas fa-layer-group"></i> Semua Prodi <span class="px-1.5 py-0.5 rounded-md text-[10px] ${activeProdi === 'all' ? 'bg-white/20 text-white' : 'bg-white text-slate-600'}">${documents.length}</span>
+                </button>
+            `;
+            prodis.forEach(p => {
+                const count = documents.filter(d => (d.prodi || 'Institusi UMMU') === p).length;
+                const isActive = activeProdi === p;
+                pillsHtml += `
+                    <button onclick="selectProdiPill('${p.replace(/'/g, "\\'")}')" class="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${isActive ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700'}">
+                        <i class="fas fa-folder"></i> ${p} <span class="px-1.5 py-0.5 rounded-md text-[10px] ${isActive ? 'bg-white/20 text-white' : 'bg-white text-slate-600'}">${count}</span>
+                    </button>
+                `;
+            });
+            pillsBox.innerHTML = pillsHtml;
+        }
+
+        function selectProdiPill(prodiVal) {
+            document.getElementById('filterProdi').value = prodiVal;
+            populateDynamicFilters();
+            renderDocuments();
+        }
+
+        function switchViewMode(mode) {
+            viewMode = mode;
+            const folderSec = document.getElementById('folderViewContainer');
+            const tableSec = document.getElementById('tableViewContainer');
+            const btnFolder = document.getElementById('btnViewFolder');
+            const btnTable = document.getElementById('btnViewTable');
+
+            if (mode === 'folder') {
+                folderSec.classList.remove('hidden');
+                tableSec.classList.add('hidden');
+                btnFolder.className = 'px-3 py-1.5 rounded-lg text-[11px] font-bold bg-blue-600 text-white shadow-sm transition flex items-center gap-1.5';
+                btnTable.className = 'px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5';
+                document.getElementById('resultHeading').innerText = 'Arsip E-File per Program Studi & Tahun Terbit';
+            } else {
+                folderSec.classList.add('hidden');
+                tableSec.classList.remove('hidden');
+                btnTable.className = 'px-3 py-1.5 rounded-lg text-[11px] font-bold bg-blue-600 text-white shadow-sm transition flex items-center gap-1.5';
+                btnFolder.className = 'px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5';
+                document.getElementById('resultHeading').innerText = 'Daftar Induk E-File (Mode Tabel)';
+            }
+            renderDocuments();
+        }
+
         function getFilteredDocs() {
             const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            const p = document.getElementById('filterProdi').value;
+            const y = document.getElementById('filterTahun').value;
             const k = document.getElementById('filterKriteria').value;
-            const s = document.getElementById('filterStatus').value;
 
             return documents.filter(d => {
+                const docProdi = d.prodi || 'Institusi UMMU';
+                const docYear = String(d.tahun_terbit || '2026');
+                const matchP = p === 'all' || docProdi === p;
+                const matchY = y === 'all' || docYear === y;
                 const matchK = k === 'all' || d.kriteria === k;
-                const matchS = s === 'all' || d.status === s;
                 const matchQ = !q ||
                     String(d.kode).toLowerCase().includes(q) ||
                     String(d.judul).toLowerCase().includes(q) ||
-                    String(d.unit).toLowerCase().includes(q) ||
+                    docProdi.toLowerCase().includes(q) ||
                     String(d.keterangan || '').toLowerCase().includes(q);
-                return matchK && matchS && matchQ;
+                return matchP && matchY && matchK && matchQ;
             });
         }
 
         function getStatusBadge(status) {
-            if (status === 'Valid') {
-                return `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"><i class="fas fa-check-circle"></i> Valid</span>`;
-            } else if (status === 'Perlu Revisi') {
-                return `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> Revisi</span>`;
-            }
-            return `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200 inline-flex items-center gap-1"><i class="fas fa-file-alt"></i> Draft</span>`;
+            if (status === 'Valid') return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"><i class="fas fa-check-circle"></i> Valid</span>`;
+            if (status === 'Perlu Revisi') return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> Revisi</span>`;
+            return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200 inline-flex items-center gap-1"><i class="fas fa-file-alt"></i> Draft</span>`;
         }
 
         function getDirectDownloadUrl(doc) {
             if (doc.download_url) return doc.download_url;
             const driveMatch = String(doc.url || '').match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (driveMatch && driveMatch[1]) {
-                return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
-            }
+            if (driveMatch && driveMatch[1]) return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
             return doc.url;
         }
 
         function convertToPreviewUrl(url) {
             const driveMatch = String(url || '').match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (driveMatch && driveMatch[1]) {
-                return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
-            }
+            if (driveMatch && driveMatch[1]) return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
             return url;
         }
 
-        function renderTable() {
+        function renderDocuments() {
             const filtered = getFilteredDocs();
-            const tbody = document.getElementById('docTableBody');
-            tbody.innerHTML = '';
-
             document.getElementById('countShown').innerText = filtered.length;
             document.getElementById('countTotal').innerText = documents.length;
 
+            if (viewMode === 'folder') {
+                renderFolderGroupedView(filtered);
+            } else {
+                renderTableView(filtered);
+            }
+        }
+
+        // RENDER MODE 1: DIPISAHKAN PER PROGRAM STUDI -> TAHUN TERBIT
+        function renderFolderGroupedView(list) {
+            const container = document.getElementById('folderViewContainer');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-12 text-center border border-slate-200 text-slate-400">
+                        <i class="fas fa-folder-open text-4xl mb-3 text-slate-300"></i>
+                        <p class="font-bold text-sm text-slate-500">Belum ada dokumen E-File yang ditemukan.</p>
+                        <p class="text-xs mt-1">Ubah filter pencarian atau login sebagai Admin untuk mengunggah berkas akreditasi.</p>
+                    </div>`;
+                return;
+            }
+
+            // Kelompokkan: grouped[prodi][tahun_terbit] = [docs...]
+            const grouped = {};
+            list.forEach(doc => {
+                const prodi = doc.prodi || 'Institusi UMMU';
+                const year = String(doc.tahun_terbit || '2026');
+                if (!grouped[prodi]) grouped[prodi] = {};
+                if (!grouped[prodi][year]) grouped[prodi][year] = [];
+                grouped[prodi][year].push(doc);
+            });
+
+            Object.keys(grouped).sort().forEach(prodi => {
+                const yearsObj = grouped[prodi];
+                const sortedYears = Object.keys(yearsObj).sort((a, b) => b.localeCompare(a));
+                const prodiTotal = sortedYears.reduce((sum, yr) => sum + yearsObj[yr].length, 0);
+
+                let yearsHtml = '';
+                sortedYears.forEach(yr => {
+                    const docsInYear = yearsObj[yr];
+                    const itemsHtml = docsInYear.map(doc => {
+                        const dlUrl = getDirectDownloadUrl(doc);
+                        const adminBtns = isAdmin ? `
+                            <button onclick="editDoc('${doc.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteDoc('${doc.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition" title="Hapus"><i class="fas fa-trash"></i></button>
+                        ` : '';
+
+                        return `
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 hover:bg-blue-50/50 border border-slate-200/80 transition">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-rose-500 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                                        <i class="fas fa-file-pdf text-base"></i>
+                                    </div>
+                                    <div>
+                                        <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                                            <span class="font-mono font-extrabold text-[11px] text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded">${doc.kode}</span>
+                                            <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 font-bold text-[10px]">${doc.kriteria}</span>
+                                            ${getStatusBadge(doc.status)}
+                                        </div>
+                                        <div class="font-extrabold text-slate-800 text-xs sm:text-sm">${doc.judul}</div>
+                                        ${doc.keterangan ? `<div class="text-[11px] text-slate-500 mt-0.5">${doc.keterangan}</div>` : ''}
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0 self-end md:self-center">
+                                    <button onclick="openPreview('${doc.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-sm transition flex items-center gap-1">
+                                        <i class="fas fa-eye"></i> Lihat
+                                    </button>
+                                    <a href="${dlUrl}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-sm transition flex items-center gap-1">
+                                        <i class="fas fa-download"></i> Unduh
+                                    </a>
+                                    <button onclick="copyLink('${dlUrl}')" class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 p-2 rounded-lg transition" title="Salin Link Download">
+                                        <i class="fas fa-link"></i>
+                                    </button>
+                                    ${adminBtns}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    yearsHtml += `
+                        <div class="p-4 sm:p-5 border-t border-slate-100 first:border-t-0">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-3 py-1 rounded-lg bg-slate-900 text-white text-xs font-extrabold flex items-center gap-1.5">
+                                        <i class="fas fa-calendar-check text-amber-400"></i> Tahun Terbit ${yr}
+                                    </span>
+                                    <span class="text-[11px] font-bold text-slate-500">${docsInYear.length} Berkas</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2.5">${itemsHtml}</div>
+                        </div>
+                    `;
+                });
+
+                const prodiCard = document.createElement('div');
+                prodiCard.className = 'bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden';
+                prodiCard.innerHTML = `
+                    <div class="bg-gradient-to-r from-slate-800 to-blue-950 px-5 py-4 text-white flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300">
+                                <i class="fas fa-graduation-cap text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold tracking-wide">${prodi}</h3>
+                                <p class="text-[11px] text-blue-200">${sortedYears.length} Tahun Terbit • ${prodiTotal} Total Dokumen E-File</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>${yearsHtml}</div>
+                `;
+                container.appendChild(prodiCard);
+            });
+        }
+
+        // RENDER MODE 2: TABEL LENGKAP
+        function renderTableView(filtered) {
+            const tbody = document.getElementById('docTableBody');
+            tbody.innerHTML = '';
+
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-semibold">Belum ada dokumen E-File yang ditampilkan.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-semibold">Tidak ada dokumen E-File yang ditampilkan.</td></tr>`;
                 return;
             }
 
             filtered.forEach(doc => {
                 const dlUrl = getDirectDownloadUrl(doc);
                 const adminButtons = isAdmin ? `
-                    <button onclick="editDoc('${doc.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Edit Dokumen"><i class="fas fa-edit"></i></button>
-                    <button onclick="deleteDoc('${doc.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition" title="Hapus Dokumen"><i class="fas fa-trash"></i></button>
+                    <button onclick="editDoc('${doc.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteDoc('${doc.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition" title="Hapus"><i class="fas fa-trash"></i></button>
                 ` : '';
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 transition";
                 tr.innerHTML = `
+                    <td class="px-4 py-3.5 font-extrabold text-slate-800 whitespace-nowrap">${doc.prodi || 'Institusi UMMU'}</td>
+                    <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold text-[11px]">${doc.tahun_terbit}</span>
+                    </td>
                     <td class="px-4 py-3.5 whitespace-nowrap">
                         <span class="font-mono font-extrabold text-blue-700 block">${doc.kode}</span>
-                        <span class="text-[10px] text-slate-400 font-bold">Tahun ${doc.tahun}</span>
-                    </td>
-                    <td class="px-4 py-3.5 whitespace-nowrap">
-                        <span class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 font-extrabold text-[10px]">${doc.kriteria}</span>
+                        <span class="text-[10px] font-bold text-indigo-600">${doc.kriteria}</span>
                     </td>
                     <td class="px-4 py-3.5">
-                        <div class="font-extrabold text-slate-800 text-xs sm:text-sm">${doc.judul}</div>
+                        <div class="font-extrabold text-slate-800 text-xs">${doc.judul}</div>
                         <div class="text-[11px] text-slate-500 mt-0.5">${doc.keterangan || '-'}</div>
                     </td>
-                    <td class="px-4 py-3.5 font-semibold text-slate-700">${doc.unit}</td>
                     <td class="px-4 py-3.5 text-center whitespace-nowrap">${getStatusBadge(doc.status)}</td>
                     <td class="px-4 py-3.5 text-center whitespace-nowrap">
                         <div class="flex items-center justify-center gap-1.5">
-                            <button onclick="openPreview('${doc.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-sm transition flex items-center gap-1">
-                                <i class="fas fa-eye"></i> Lihat
-                            </button>
-                            <a href="${dlUrl}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-sm transition flex items-center gap-1" title="Download Langsung">
-                                <i class="fas fa-download"></i> Unduh
-                            </a>
-                            <button onclick="copyLink('${dlUrl}')" class="bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 p-2 rounded-lg transition" title="Salin Link Download">
-                                <i class="fas fa-link"></i>
-                            </button>
+                            <button onclick="openPreview('${doc.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-sm transition flex items-center gap-1"><i class="fas fa-eye"></i> Lihat</button>
+                            <a href="${dlUrl}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-sm transition flex items-center gap-1"><i class="fas fa-download"></i> Unduh</a>
                             ${adminButtons}
                         </div>
                     </td>
@@ -583,11 +881,84 @@
             });
         }
 
+        // ================= FITUR GANTI LOGO (TERSIMPAN KE GOOGLE SHEETS) =================
+        function openLogoModal() {
+            pendingLogoData = currentLogoData;
+            document.getElementById('logoFileInput').value = '';
+            document.getElementById('logoUrlInput').value = currentLogoData.startsWith('http') ? currentLogoData : '';
+            updateLogoPreviewBox(pendingLogoData);
+            toggleModal('logoModal');
+        }
+
+        function updateLogoPreviewBox(src) {
+            const img = document.getElementById('logoPreviewImg');
+            const empty = document.getElementById('logoPreviewEmpty');
+            if (src) {
+                img.src = src;
+                img.classList.remove('hidden');
+                empty.classList.add('hidden');
+            } else {
+                img.src = '';
+                img.classList.add('hidden');
+                empty.classList.remove('hidden');
+            }
+        }
+
+        function previewLogoUrl(url) {
+            pendingLogoData = url.trim();
+            updateLogoPreviewBox(pendingLogoData);
+        }
+
+        // Kompresi otomatis gambar logo via Canvas (maks 220x220px) agar ringan dan muat di sel Google Sheets
+        function handleLogoFileChange(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxSize = 220;
+                    let w = img.width, h = img.height;
+                    if (w > h && w > maxSize) { h = Math.round((h * maxSize) / w); w = maxSize; }
+                    else if (h >= w && h > maxSize) { w = Math.round((w * maxSize) / h); h = maxSize; }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    pendingLogoData = canvas.toDataURL('image/png');
+                    document.getElementById('logoUrlInput').value = '';
+                    updateLogoPreviewBox(pendingLogoData);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function saveLogoToCloud() {
+            Swal.fire({ title: 'Menyimpan Logo ke Google Sheets...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                applyLogoToUI(pendingLogoData);
+                await pushToGoogleSheets('save_settings', { settings: { app_logo: pendingLogoData } });
+                toggleModal('logoModal');
+                Swal.fire({ icon: 'success', title: 'Logo Diperbarui!', text: 'Logo baru tersimpan di Google Sheets dan tampil untuk semua pengunjung.', timer: 1600, showConfirmButton: false });
+            } catch (err) {
+                Swal.fire('Gagal Menyimpan Logo', err.message, 'error');
+            }
+        }
+
+        async function resetLogoToDefault() {
+            pendingLogoData = '';
+            updateLogoPreviewBox('');
+            await saveLogoToCloud();
+        }
+
+        // ================= PRATINJAU & LINK =================
         function openPreview(id) {
             const doc = documents.find(d => d.id === id);
             if (!doc) return;
             document.getElementById('previewKode').innerText = doc.kode;
-            document.getElementById('previewTitle').innerText = doc.judul;
+            document.getElementById('previewTitle').innerText = `${doc.judul} (${doc.prodi} - ${doc.tahun_terbit})`;
             document.getElementById('previewDownloadBtn').href = getDirectDownloadUrl(doc);
             document.getElementById('previewFrame').src = convertToPreviewUrl(doc.url);
             toggleModal('previewModal');
@@ -603,7 +974,6 @@
             Swal.fire({ icon: 'success', title: 'Link Download Disalin!', timer: 1200, showConfirmButton: false });
         }
 
-        // SWITCH SUMBER FILE (UPLOAD VS LINK)
         function switchSourceMode(mode) {
             sourceMode = mode;
             const uploadBox = document.getElementById('sourceUploadBox');
@@ -624,7 +994,6 @@
             }
         }
 
-        // KONVERSI FILE KE BASE64 UNTUK DIKIRIM KE GOOGLE DRIVE VIA APPS SCRIPT
         function readFileAsBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -634,7 +1003,7 @@
             });
         }
 
-        // PENGATURAN URL GOOGLE SHEETS
+        // ================= PENGATURAN URL & AUTH ADMIN =================
         function openSettingsModal() {
             document.getElementById('gasUrlInput').value = gasWebAppUrl;
             toggleModal('settingsModal');
@@ -648,7 +1017,6 @@
             loadDataFromCloud(true);
         }
 
-        // LOGIN ADMIN
         function handleAdminAuth() {
             Swal.fire({
                 title: 'Login Admin Akreditasi',
@@ -691,11 +1059,11 @@
             updateUI();
         }
 
-        // CRUD DOKUMEN
+        // ================= CRUD DOKUMEN =================
         function openDocModal() {
             document.getElementById('docForm').reset();
             document.getElementById('docId').value = '';
-            document.getElementById('docTahun').value = new Date().getFullYear();
+            document.getElementById('docTahunTerbit').value = new Date().getFullYear();
             document.getElementById('docModalTitle').innerHTML = '<i class="fas fa-cloud-upload-alt text-blue-400 mr-2"></i>Tambah / Upload E-File';
             switchSourceMode('upload');
             toggleModal('docModal');
@@ -705,11 +1073,11 @@
             const doc = documents.find(d => d.id === id);
             if (!doc) return;
             document.getElementById('docId').value = doc.id;
+            document.getElementById('docProdi').value = doc.prodi || 'Institusi UMMU';
+            document.getElementById('docTahunTerbit').value = doc.tahun_terbit || new Date().getFullYear();
             document.getElementById('docKode').value = doc.kode;
             document.getElementById('docKriteria').value = doc.kriteria;
-            document.getElementById('docTahun').value = doc.tahun;
             document.getElementById('docJudul').value = doc.judul;
-            document.getElementById('docUnit').value = doc.unit;
             document.getElementById('docStatus').value = doc.status;
             document.getElementById('docUrl').value = doc.url || '';
             document.getElementById('docKet').value = doc.keterangan || '';
@@ -723,35 +1091,33 @@
         document.getElementById('docForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const idVal = document.getElementById('docId').value;
-            const fileInput = document.getElementById('docFileUpload');
-            const selectedFile = fileInput.files[0];
+            const selectedFile = document.getElementById('docFileUpload').files[0];
             const linkVal = document.getElementById('docUrl').value.trim();
 
             if (sourceMode === 'upload' && !selectedFile && !idVal) {
-                return Swal.fire('Berkas Belum Dipilih', 'Silakan pilih file untuk diunggah atau beralih ke mode "Tempel Link URL".', 'warning');
+                return Swal.fire('Berkas Belum Dipilih', 'Pilih file untuk diunggah atau pindah ke mode "Tempel Link URL".', 'warning');
             }
             if (sourceMode === 'link' && !linkVal) {
-                return Swal.fire('Link Kosong', 'Silakan tempelkan URL dokumen.', 'warning');
+                return Swal.fire('Link Kosong', 'Silakan tempelkan tautan URL file.', 'warning');
             }
             if (selectedFile && selectedFile.size > 10 * 1024 * 1024) {
-                return Swal.fire('Ukuran File Terlalu Besar', 'Maksimal upload langsung adalah 10 MB. Untuk file lebih besar, unggah ke Google Drive lalu tempelkan linknya.', 'warning');
+                return Swal.fire('File Terlalu Besar', 'Maksimal upload langsung 10 MB. Untuk file >10 MB, unggah ke Drive lalu tempelkan linknya.', 'warning');
             }
 
             const payload = {
                 id: idVal || ('doc-' + Date.now()),
                 kode: document.getElementById('docKode').value.trim().toUpperCase(),
+                prodi: document.getElementById('docProdi').value.trim(),
+                tahun_terbit: String(document.getElementById('docTahunTerbit').value).trim(),
                 kriteria: document.getElementById('docKriteria').value,
-                tahun: document.getElementById('docTahun').value,
                 judul: document.getElementById('docJudul').value.trim(),
-                unit: document.getElementById('docUnit').value.trim(),
                 status: document.getElementById('docStatus').value,
                 url: linkVal,
                 keterangan: document.getElementById('docKet').value.trim()
             };
 
             Swal.fire({
-                title: selectedFile ? 'Mengunggah File ke Google Drive...' : 'Menyimpan ke Google Sheets...',
-                text: 'Mohon tunggu sebentar.',
+                title: selectedFile ? `Mengunggah ke Folder ${payload.prodi}/${payload.tahun_terbit}...` : 'Menyimpan ke Google Sheets...',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
@@ -768,14 +1134,13 @@
 
                 if (res.status === 'success') {
                     await loadDataFromCloud(false);
-                    Swal.fire({ icon: 'success', title: 'Berhasil Tersimpan!', text: 'Dokumen telah masuk ke Google Sheets & siap diunduh publik.', timer: 1600, showConfirmButton: false });
+                    Swal.fire({ icon: 'success', title: 'Berhasil Tersimpan!', text: `Dokumen masuk ke ${payload.prodi} (Tahun ${payload.tahun_terbit}).`, timer: 1600, showConfirmButton: false });
                 } else {
-                    // Fallback jika GAS URL belum diisi
                     const idx = documents.findIndex(d => d.id === payload.id);
                     if (idx !== -1) documents[idx] = payload; else documents.unshift(payload);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
                     updateUI();
-                    Swal.fire('Tersimpan Lokal', 'URL Google Sheets belum diatur. Atur di menu "Pengaturan Google Sheets" agar tampil ke publik.', 'info');
+                    Swal.fire('Tersimpan Lokal', 'Atur URL Google Sheets di Panel Admin agar data tampil ke publik.', 'info');
                 }
             } catch (err) {
                 Swal.fire('Gagal Menyimpan', err.message, 'error');
@@ -805,17 +1170,17 @@
             });
         }
 
-        // EXPORT & IMPORT EXCEL (SINKRON KE GOOGLE SHEETS)
+        // ================= EXCEL & CETAK =================
         function exportToExcel() {
             const list = getFilteredDocs();
             if (list.length === 0) return Swal.fire('Kosong', 'Tidak ada data untuk diekspor.', 'warning');
             const rows = list.map((d, i) => ({
                 "No": i + 1,
+                "Program Studi": d.prodi,
+                "Tahun Terbit": d.tahun_terbit,
                 "Kode": d.kode,
                 "Kriteria": d.kriteria,
                 "Judul Dokumen": d.judul,
-                "Unit / Prodi": d.unit,
-                "Tahun": d.tahun,
                 "Status": d.status,
                 "Tautan File": d.url,
                 "Link Download Publik": getDirectDownloadUrl(d),
@@ -843,41 +1208,41 @@
                             batch.push({
                                 id: 'doc-' + Date.now() + '-' + idx,
                                 kode: String(r.Kode || r.kode || `DOC-${idx + 1}`),
+                                prodi: String(r['Program Studi'] || r.prodi || r['Unit / Prodi'] || 'Institusi UMMU'),
+                                tahun_terbit: String(r['Tahun Terbit'] || r.tahun_terbit || r.Tahun || new Date().getFullYear()),
                                 kriteria: r.Kriteria || r.kriteria || 'Kriteria 1',
                                 judul: String(judul),
-                                unit: r['Unit / Prodi'] || r.unit || 'UMMU',
-                                tahun: String(r.Tahun || r.tahun || new Date().getFullYear()),
                                 status: r.Status || r.status || 'Valid',
                                 url: String(url),
                                 keterangan: r.Keterangan || r.keterangan || ''
                             });
                         }
                     });
-                    if (batch.length === 0) return Swal.fire('Kosong', 'Tidak ditemukan kolom "Judul Dokumen" & "Tautan File".', 'warning');
+                    if (batch.length === 0) return Swal.fire('Kosong', 'Pastikan ada kolom "Judul Dokumen" & "Tautan File".', 'warning');
 
                     Swal.fire({ title: `Menyimpan ${batch.length} Data ke Google Sheets...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                     await pushToGoogleSheets('save', { data: batch });
                     await loadDataFromCloud(false);
-                    Swal.fire('Import Berhasil', `${batch.length} dokumen berhasil masuk ke Google Sheets.`, 'success');
+                    Swal.fire('Import Berhasil', `${batch.length} dokumen berhasil disimpan ke Google Sheets.`, 'success');
                 } catch (err) {
-                    Swal.fire('Error', 'Gagal mengimpor Excel: ' + err.message, 'error');
+                    Swal.fire('Error', err.message, 'error');
                 }
                 e.target.value = '';
             };
             reader.readAsArrayBuffer(file);
         });
 
-        // CETAK DAFTAR INDUK
         function printMasterList() {
             const list = getFilteredDocs();
+            const logoHtml = currentLogoData ? `<img src="${currentLogoData}" style="height:64px;object-fit:contain;">` : '';
             const rowsHtml = list.map((d, i) => `
                 <tr>
                     <td style="border:1px solid #333;padding:6px;text-align:center;">${i + 1}</td>
+                    <td style="border:1px solid #333;padding:6px;"><b>${d.prodi}</b></td>
+                    <td style="border:1px solid #333;padding:6px;text-align:center;">${d.tahun_terbit}</td>
                     <td style="border:1px solid #333;padding:6px;font-family:monospace;">${d.kode}</td>
                     <td style="border:1px solid #333;padding:6px;">${d.kriteria}</td>
                     <td style="border:1px solid #333;padding:6px;"><b>${d.judul}</b><br><small>${d.keterangan || ''}</small></td>
-                    <td style="border:1px solid #333;padding:6px;">${d.unit}</td>
-                    <td style="border:1px solid #333;padding:6px;text-align:center;">${d.tahun}</td>
                     <td style="border:1px solid #333;padding:6px;text-align:center;">${d.status}</td>
                 </tr>
             `).join('');
@@ -885,20 +1250,23 @@
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = `
                 <div style="font-family: Arial, sans-serif;">
-                    <div style="text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:16px;">
-                        <h2 style="margin:0;font-size:18px;">UNIVERSITAS MUHAMMADIYAH MALUKU UTARA</h2>
-                        <h3 style="margin:4px 0;font-size:14px;">DAFTAR INDUK E-FILE BUKTI DUKUNG AKREDITASI</h3>
-                        <p style="margin:0;font-size:11px;">Dicetak pada: ${new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}</p>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:16px;border-bottom:3px double #000;padding-bottom:12px;margin-bottom:16px;">
+                        ${logoHtml}
+                        <div style="text-align:center;">
+                            <h2 style="margin:0;font-size:18px;">UNIVERSITAS MUHAMMADIYAH MALUKU UTARA</h2>
+                            <h3 style="margin:4px 0;font-size:14px;">DAFTAR INDUK E-FILE AKREDITASI (PER PROGRAM STUDI & TAHUN TERBIT)</h3>
+                            <p style="margin:0;font-size:11px;">Dicetak pada: ${new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}</p>
+                        </div>
                     </div>
                     <table style="width:100%;border-collapse:collapse;font-size:11px;">
                         <thead>
                             <tr style="background:#f1f5f9;">
                                 <th style="border:1px solid #333;padding:6px;">No</th>
+                                <th style="border:1px solid #333;padding:6px;">Program Studi</th>
+                                <th style="border:1px solid #333;padding:6px;">Tahun</th>
                                 <th style="border:1px solid #333;padding:6px;">Kode</th>
                                 <th style="border:1px solid #333;padding:6px;">Kriteria</th>
                                 <th style="border:1px solid #333;padding:6px;">Nama Dokumen</th>
-                                <th style="border:1px solid #333;padding:6px;">Unit / Prodi</th>
-                                <th style="border:1px solid #333;padding:6px;">Tahun</th>
                                 <th style="border:1px solid #333;padding:6px;">Status</th>
                             </tr>
                         </thead>
@@ -913,9 +1281,11 @@
 
         function resetFilters() {
             document.getElementById('searchInput').value = '';
+            document.getElementById('filterProdi').value = 'all';
+            document.getElementById('filterTahun').value = 'all';
             document.getElementById('filterKriteria').value = 'all';
-            document.getElementById('filterStatus').value = 'all';
-            renderTable();
+            populateDynamicFilters();
+            renderDocuments();
         }
 
         function toggleModal(id) {
@@ -926,6 +1296,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            applyLogoToUI(currentLogoData);
             updateUI();
             loadDataFromCloud(false);
         });
