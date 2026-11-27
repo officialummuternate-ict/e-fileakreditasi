@@ -1,1045 +1,934 @@
 <!DOCTYPE html>
-<html lang="id" class="scroll-smooth">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ujian Evaluasi PKL Informatika — SMK Negeri 1 Maba</title>
+    <title>E-File Akreditasi Kampus — UMMU</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        display: ['Plus Jakarta Sans', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        .glass-nav { background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(10px); }
+        .modal { transition: opacity 0.2s ease; }
+        body.modal-active { overflow: hidden; }
         @media print {
             body * { visibility: hidden; }
-            #lembar-cetak-admin, #lembar-cetak-admin * { visibility: visible; }
-            #lembar-cetak-admin {
-                position: fixed; left: 0; top: 0; width: 100%;
-                box-shadow: none !important; border: none !important;
-                background: white !important;
-                padding: 20px !important;
-            }
-            .no-print { display: none !important; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; }
         }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
-    <!-- HEADER -->
-    <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800 no-print">
-        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-            <div class="flex items-center gap-3">
-                <img src="https://placehold.co/100x100/1e3a8a/fbbf24?text=SMAN+1" alt="Logo" class="app-logo w-11 h-11 rounded-full object-cover bg-white p-0.5 border border-amber-400">
+    <!-- NAVBAR -->
+    <nav class="glass-nav text-white shadow-lg sticky top-0 z-40 border-b border-slate-800">
+        <div class="container mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center max-w-7xl gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-extrabold text-lg shadow-md border border-blue-400/30 shrink-0">
+                    <i class="fas fa-folder-open"></i>
+                </div>
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500 text-slate-950">Evaluasi Akhir PKL</span>
-                    <h1 class="font-display font-extrabold text-base sm:text-lg leading-tight mt-0.5">UJIAN PKL — SMK NEGERI 1 MABA</h1>
-                    <p class="text-[11px] text-slate-400">Kompetensi Informatika &amp; Etos Kerja Industri</p>
+                    <span class="text-sm sm:text-lg font-extrabold tracking-wide block leading-none">E-FILE AKREDITASI</span>
+                    <span class="text-[10px] sm:text-[11px] text-blue-300 font-medium">Universitas Muhammadiyah Maluku Utara</span>
                 </div>
             </div>
+
             <div class="flex items-center gap-2">
-                <div id="box-timer" class="hidden items-center gap-2 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 text-xs font-mono">
-                    <i class="fa-regular fa-clock text-amber-400"></i>
-                    <span id="timer-ujian">45:00</span>
-                </div>
-                <button type="button" onclick="bukaModalAdmin()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <span>Panel Admin</span>
+                <!-- Status Koneksi Google Sheets -->
+                <span id="dbStatusBadge" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-800 border border-slate-700 text-slate-300">
+                    <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span id="dbStatusText">Menghubungkan...</span>
+                </span>
+
+                <button onclick="loadDataFromCloud(true)" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="Muat Ulang Data dari Google Sheets">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+
+                <button id="btnAdminLogin" onclick="handleAdminAuth()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow transition flex items-center gap-1.5">
+                    <i class="fas fa-user-shield"></i> <span class="hidden sm:inline">Login Admin</span>
+                </button>
+                <button id="btnAdminLogout" onclick="logoutAdmin()" class="hidden px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow transition items-center gap-1.5">
+                    <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Keluar</span>
                 </button>
             </div>
         </div>
-    </header>
+    </nav>
 
     <!-- MAIN CONTENT -->
-    <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full no-print">
+    <main class="container mx-auto px-4 py-6 max-w-7xl flex-grow space-y-6">
 
-        <!-- 0. GERBANG VERIFIKASI NISN (TAMPIL PERTAMA KALI) -->
-        <section id="section-verifikasi" class="max-w-md mx-auto bg-white rounded-3xl p-7 sm:p-8 shadow-lg border border-slate-200 mt-4 text-center">
-            <div class="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4 text-3xl border border-blue-200">
-                <i class="fa-solid fa-id-card"></i>
-            </div>
-            <h2 class="font-display font-extrabold text-xl text-slate-900">Verifikasi Peserta Ujian</h2>
-            <p class="text-xs text-slate-500 mt-1 mb-6">Masukkan 10 digit <strong>NISN</strong> Anda yang terdaftar untuk membuka lembar soal ujian PKL.</p>
-
-            <form onsubmit="verifikasiNISNSiswa(event)" class="space-y-4 text-left">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Nomor Induk Siswa Nasional (NISN) *</label>
-                    <input type="text" id="input-verif-nisn" required placeholder="Contoh: 0085786757" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 font-mono text-center text-base tracking-wider focus:ring-2 focus:ring-blue-600 focus:outline-none">
+        <!-- HERO BANNER -->
+        <section class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+            <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div class="max-w-2xl">
+                    <span class="inline-block px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[11px] font-bold uppercase tracking-wider mb-3">
+                        <i class="fas fa-cloud-download-alt mr-1"></i> Repositori Publik Bukti Dukung Akreditasi
+                    </span>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Sistem E-File Akreditasi Kampus</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        Akses dan unduh langsung dokumen SK, Sertifikat Akreditasi, LED, LKPS, dan bukti dukung Kriteria 1–9 secara terpusat dari database Google Sheets & Google Drive.
+                    </p>
                 </div>
-                <div id="verif-error-msg" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold text-center"></div>
-                <button type="submit" id="btn-verif-nisn" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-display font-bold text-sm shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>Verifikasi &amp; Mulai Ujian</span>
+                <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 w-full md:w-64 shrink-0">
+                    <div class="flex justify-between items-center text-xs font-bold mb-1.5">
+                        <span class="text-blue-200">Kesiapan Dokumen Valid</span>
+                        <span id="readinessPercent" class="text-emerald-400 font-extrabold">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                        <div id="readinessBar" class="bg-emerald-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p class="text-[10px] text-slate-300 mt-2">
+                        <i class="fas fa-check-circle text-emerald-400 mr-1"></i> <span id="readinessText">0 dari 0 dokumen tervalidasi</span>
+                    </p>
+                </div>
+            </div>
+            <i class="fas fa-file-shield text-9xl text-white/5 absolute -right-4 -bottom-4 transform -rotate-12"></i>
+        </section>
+
+        <!-- STATISTIK RINGKAS -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-copy"></i></div>
+                <div>
+                    <div class="text-2xl font-extrabold text-slate-800" id="statTotal">0</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total E-File</div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-check-double"></i></div>
+                <div>
+                    <div class="text-2xl font-extrabold text-slate-800" id="statValid">0</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Valid / Siap AL</div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-clock"></i></div>
+                <div>
+                    <div class="text-2xl font-extrabold text-slate-800" id="statReview">0</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Draft / Revisi</div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-layer-group"></i></div>
+                <div>
+                    <div class="text-2xl font-extrabold text-slate-800" id="statKriteriaCount">0/10</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kategori Terisi</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL AKSI ADMIN -->
+        <section id="adminActionPanel" class="hidden bg-white p-5 rounded-2xl shadow-sm border-l-4 border-blue-600 space-y-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <span class="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[10px] font-extrabold uppercase">Panel Admin Tim Akreditasi</span>
+                    <h2 class="text-sm font-extrabold text-slate-800 mt-1">Kelola Dokumen E-File & Database Google Sheets</h2>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="openDocModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+                        <i class="fas fa-cloud-upload-alt"></i> Tambah / Upload E-File
+                    </button>
+                    <button onclick="openSettingsModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+                        <i class="fas fa-database"></i> Pengaturan Google Sheets
+                    </button>
+                    <label class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow cursor-pointer transition flex items-center gap-1.5">
+                        <i class="fas fa-file-import"></i> Import Excel
+                        <input type="file" id="importExcelInput" class="hidden" accept=".xlsx,.xls,.csv">
+                    </label>
+                    <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </button>
+                    <button onclick="printMasterList()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+                        <i class="fas fa-print"></i> Cetak Daftar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- FILTER & PENCARIAN -->
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+            <div class="lg:col-span-2">
+                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Cari Dokumen / Kode / Unit</label>
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Ketik nama dokumen, kode (K1-01), atau prodi..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Kriteria / Kategori</label>
+                <select id="filterKriteria" onchange="renderTable()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all">Semua Kriteria</option>
+                    <option value="SK & Sertifikat">SK & Sertifikat Akreditasi</option>
+                    <option value="Kriteria 1">Kriteria 1: VMTS</option>
+                    <option value="Kriteria 2">Kriteria 2: Tata Pamong & Kerja Sama</option>
+                    <option value="Kriteria 3">Kriteria 3: Mahasiswa</option>
+                    <option value="Kriteria 4">Kriteria 4: Sumber Daya Manusia</option>
+                    <option value="Kriteria 5">Kriteria 5: Keuangan, Sarana & Prasarana</option>
+                    <option value="Kriteria 6">Kriteria 6: Pendidikan</option>
+                    <option value="Kriteria 7">Kriteria 7: Penelitian</option>
+                    <option value="Kriteria 8">Kriteria 8: Pengabdian Masyarakat</option>
+                    <option value="Kriteria 9">Kriteria 9: Luaran & Capaian Tridharma</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Status Validasi</label>
+                <select id="filterStatus" onchange="renderTable()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all">Semua Status</option>
+                    <option value="Valid">Valid / Siap AL</option>
+                    <option value="Perlu Revisi">Perlu Revisi</option>
+                    <option value="Draft">Draft</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="resetFilters()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="fas fa-undo"></i> Reset Filter
                 </button>
-            </form>
-        </section>
-
-        <!-- 1. FORM BIODATA PESERTA PKL (TERBUKA SETELAH NISN VALID) -->
-        <section id="section-biodata" class="hidden bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 mb-6">
-            <div class="border-b border-slate-200 pb-4 mb-5 flex flex-wrap justify-between items-center gap-2">
-                <div>
-                    <h2 class="font-display font-bold text-xl text-slate-900">Identitas Peserta Terverifikasi</h2>
-                    <p class="text-xs text-slate-500">Lengkapi Kelas &amp; Tempat PKL lalu kerjakan 18 soal di bawah ini.</p>
-                </div>
-                <span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <i class="fa-solid fa-circle-check mr-1"></i> NISN Terverifikasi
-                </span>
-            </div>
-
-            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Siswa</label>
-                    <input type="text" id="siswa-nama" readonly class="w-full px-3.5 py-2.5 rounded-xl bg-slate-200/70 border border-slate-300 font-bold text-slate-800 cursor-not-allowed">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">NISN</label>
-                    <input type="text" id="siswa-nisn" readonly class="w-full px-3.5 py-2.5 rounded-xl bg-slate-200/70 border border-slate-300 font-mono font-bold text-slate-800 cursor-not-allowed">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kelas *</label>
-                    <input type="text" id="siswa-kelas" required placeholder="Contoh: XII IPA 1" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Instansi / Tempat PKL *</label>
-                    <input type="text" id="siswa-instansi" required placeholder="Contoh: UMMU / Kominfo" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
-                </div>
             </div>
         </section>
 
-        <!-- 2. DAFTAR SOAL UJIAN (TERBUKA SETELAH NISN VALID) -->
-        <form id="form-ujian-pkl" onsubmit="prosesNilaiUjian(event)" class="hidden space-y-6">
-            <div id="container-soal" class="space-y-5"></div>
-
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="text-xs text-slate-600">
-                    <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>
-                    Pastikan seluruh <strong>18 soal</strong> telah terjawab. Jawaban yang sudah dikirim <strong>tidak dapat diulang</strong>.
+        <!-- TABEL DOKUMEN E-FILE -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50">
+                <div>
+                    <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Daftar Induk E-File Akreditasi (Akses Publik)</h3>
+                    <p class="text-[11px] text-slate-500">Klik <b>Lihat</b> untuk pratinjau langsung atau klik <b>Unduh</b> untuk mengunduh berkas.</p>
                 </div>
-                <button type="submit" id="btn-selesai-ujian" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-display font-bold text-sm shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-check-double"></i>
-                    <span>Selesaikan &amp; Kirim Jawaban</span>
-                </button>
-            </div>
-        </form>
-
-        <!-- 3. RINGKASAN NILAI KHUSUS SISWA (HANYA TOTAL NILAI & RATA-RATA) -->
-        <section id="ringkasan-hasil-siswa" class="hidden bg-white rounded-3xl p-6 sm:p-10 shadow-xl border-2 border-emerald-500/30 mt-8 max-w-2xl mx-auto text-center">
-            <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-3xl">
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
-            <h2 class="font-display font-extrabold text-2xl text-slate-900">Ujian Evaluasi PKL Selesai</h2>
-            <p class="text-xs text-slate-500 mt-1">Jawaban Anda telah terkunci dan tersimpan di database. Rincian lembar penilaian lengkap dikelola oleh Admin / Pembimbing.</p>
-
-            <div class="mt-4">
-                <span class="inline-block px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-800 font-bold">Tersimpan di Google Sheets</span>
+                <span class="text-xs font-bold text-slate-600">Menampilkan <strong id="countShown" class="text-blue-600">0</strong> dari <strong id="countTotal">0</strong> berkas</span>
             </div>
 
-            <div class="mt-6 bg-slate-50 rounded-2xl p-4 border border-slate-200 text-xs text-left grid sm:grid-cols-2 gap-2.5">
-                <div><span class="text-slate-500">Nama Peserta:</span> <strong id="s-nama" class="text-slate-900"></strong></div>
-                <div><span class="text-slate-500">NISN:</span> <strong id="s-nisn" class="font-mono text-slate-900"></strong></div>
-                <div><span class="text-slate-500">Kelas:</span> <strong id="s-kelas" class="text-slate-900"></strong></div>
-                <div><span class="text-slate-500">Tempat PKL:</span> <strong id="s-instansi" class="text-blue-700"></strong></div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mt-6">
-                <div class="p-5 rounded-2xl bg-blue-50 border border-blue-200">
-                    <span class="text-xs font-bold uppercase text-blue-700 block">Total Nilai</span>
-                    <div id="s-total" class="font-mono font-extrabold text-3xl sm:text-4xl text-blue-900 mt-1">0</div>
-                    <span class="text-[11px] text-slate-500">Skor Maksimal 600</span>
-                </div>
-                <div class="p-5 rounded-2xl bg-emerald-50 border border-emerald-200">
-                    <span class="text-xs font-bold uppercase text-emerald-700 block">Nilai Rata-Rata</span>
-                    <div id="s-rata" class="font-mono font-extrabold text-3xl sm:text-4xl text-emerald-700 mt-1">0.00</div>
-                    <span class="text-[11px] text-slate-500">Skala 0 – 100</span>
-                </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-xs">
+                    <thead class="bg-slate-900 text-white uppercase text-[10px] tracking-wider font-extrabold">
+                        <tr>
+                            <th class="px-4 py-3.5 text-left">Kode & Tahun</th>
+                            <th class="px-4 py-3.5 text-left">Kriteria</th>
+                            <th class="px-4 py-3.5 text-left">Nama Dokumen & Keterangan</th>
+                            <th class="px-4 py-3.5 text-left">Unit / Prodi</th>
+                            <th class="px-4 py-3.5 text-center">Status</th>
+                            <th class="px-4 py-3.5 text-center">Aksi Publik & Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docTableBody" class="divide-y divide-slate-100 bg-white"></tbody>
+                </table>
             </div>
         </section>
-
     </main>
 
-    <!-- ==================== MODAL PANEL ADMIN ==================== -->
-    <div id="modal-admin" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-3xl max-w-5xl w-full p-6 sm:p-8 shadow-2xl border relative my-auto max-h-[92vh] overflow-y-auto">
-            <button type="button" onclick="tutupModalAdmin()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-red-500 hover:text-white flex items-center justify-center absolute top-5 right-5 font-bold no-print">&times;</button>
-
-            <!-- A. LAYAR LOGIN PIN ADMIN -->
-            <div id="admin-login-box" class="max-w-sm mx-auto py-6 text-center">
-                <div class="w-14 h-14 rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center mx-auto mb-3 text-2xl">
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-                <h3 class="font-display font-bold text-xl text-slate-900">Akses Khusus Admin</h3>
-                <p class="text-xs text-slate-500 mt-1 mb-5">Masukkan PIN Admin untuk melihat Lembar Penilaian, Kelola NISN Peserta &amp; Logo.</p>
-                <form onsubmit="verifikasiPinAdmin(event)" class="space-y-3">
-                    <input type="password" id="admin-pin-input" required placeholder="Masukkan PIN Admin" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-center font-mono text-sm">
-                    <button type="submit" id="btn-cek-pin" class="w-full py-3 rounded-xl bg-slate-900 hover:bg-blue-700 text-white font-bold text-sm transition">
-                        Buka Panel Admin
-                    </button>
-                </form>
+    <!-- MODAL TAMBAH / EDIT / UPLOAD DOKUMEN -->
+    <div id="docModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="toggleModal('docModal')"></div>
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[92vh]">
+            <div class="bg-slate-900 px-6 py-4 text-white flex justify-between items-center shrink-0">
+                <h3 id="docModalTitle" class="text-sm font-extrabold uppercase tracking-wider"><i class="fas fa-cloud-upload-alt text-blue-400 mr-2"></i>Tambah / Upload E-File</h3>
+                <button onclick="toggleModal('docModal')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
             </div>
+            <form id="docForm" class="p-6 space-y-4 text-xs overflow-y-auto">
+                <input type="hidden" id="docId">
 
-            <!-- B. ISI PANEL ADMIN -->
-            <div id="admin-content-box" class="hidden">
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4 mb-5 pr-10 no-print">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     <div>
-                        <h3 class="font-display font-extrabold text-xl text-slate-900">Panel Admin Evaluasi PKL</h3>
-                        <p class="text-xs text-slate-500">SMA Negeri 1 Maba • Database Google Sheets</p>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Kode Dokumen *</label>
+                        <input type="text" id="docKode" required placeholder="Contoh: K1-001" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" onclick="pindahTabAdmin('rekap')" id="tab-admin-rekap" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white">
-                            <i class="fa-solid fa-table-list mr-1"></i> Rekap Nilai
-                        </button>
-                        <button type="button" onclick="pindahTabAdmin('peserta')" id="tab-admin-peserta" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
-                            <i class="fa-solid fa-users mr-1"></i> Kelola Peserta (NISN)
-                        </button>
-                        <button type="button" onclick="pindahTabAdmin('logo')" id="tab-admin-logo" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
-                            <i class="fa-solid fa-image mr-1"></i> Ganti Logo
-                        </button>
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Kriteria / Kategori *</label>
+                        <select id="docKriteria" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="SK & Sertifikat">SK & Sertifikat</option>
+                            <option value="Kriteria 1">Kriteria 1</option>
+                            <option value="Kriteria 2">Kriteria 2</option>
+                            <option value="Kriteria 3">Kriteria 3</option>
+                            <option value="Kriteria 4">Kriteria 4</option>
+                            <option value="Kriteria 5">Kriteria 5</option>
+                            <option value="Kriteria 6">Kriteria 6</option>
+                            <option value="Kriteria 7">Kriteria 7</option>
+                            <option value="Kriteria 8">Kriteria 8</option>
+                            <option value="Kriteria 9">Kriteria 9</option>
+                        </select>
                     </div>
-                </div>
-
-                <!-- TAB 1: REKAP NILAI -->
-                <div id="admin-tab-rekap" class="no-print">
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-xs font-semibold text-slate-600">Daftar Peserta yang Telah Menyelesaikan Ujian:</span>
-                        <button type="button" onclick="muatDataAdmin()" class="text-xs font-bold text-blue-600 hover:underline">
-                            <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh Data
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto border rounded-2xl">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead class="bg-slate-100 text-slate-700 border-b">
-                                <tr>
-                                    <th class="py-3 px-3">Waktu</th>
-                                    <th class="py-3 px-3">Nama &amp; NISN</th>
-                                    <th class="py-3 px-3">Kelas / Tempat PKL</th>
-                                    <th class="py-3 px-3 text-center">Total</th>
-                                    <th class="py-3 px-3 text-center">Rata-Rata</th>
-                                    <th class="py-3 px-3 text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-rekap-admin" class="divide-y"></tbody>
-                        </table>
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Tahun Dokumen *</label>
+                        <input type="number" id="docTahun" required min="2000" max="2035" value="2026" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                 </div>
 
-                <!-- DETAIL LEMBAR PENILAIAN EVALUASI PKL (KHUSUS ADMIN) -->
-                <div id="lembar-cetak-admin" class="hidden mt-6 bg-white rounded-2xl p-6 border-2 border-slate-300">
-                    <div class="flex justify-between items-center mb-4 no-print">
-                        <span class="text-xs font-bold text-blue-700 uppercase">Pratinjau Lembar Penilaian Resmi (Khusus Admin)</span>
-                        <div class="flex gap-2">
-                            <button type="button" onclick="window.print()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow flex items-center gap-1.5">
-                                <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
-                            </button>
-                            <button type="button" onclick="document.getElementById('lembar-cetak-admin').classList.add('hidden')" class="px-3 py-2 rounded-xl bg-slate-200 text-slate-700 font-bold text-xs">Tutup</button>
-                        </div>
-                    </div>
+                <div>
+                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Judul / Nama Dokumen E-File *</label>
+                    <input type="text" id="docJudul" required placeholder="Contoh: SK & Sertifikat Akreditasi Institusi UMMU" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
 
-                    <div class="flex flex-wrap justify-between items-center border-b-2 border-slate-900 pb-4 mb-5 gap-4">
-                        <div class="flex items-center gap-3.5">
-                            <img src="https://placehold.co/100x100/1e3a8a/fbbf24?text=SMAN+1" class="app-logo w-14 h-14 rounded-full object-cover border">
-                            <div>
-                                <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">LEMBAR PENILAIAN EVALUASI PKL</h2>
-                                <p class="text-xs font-semibold text-slate-600">SMA NEGERI 1 MABA • KABUPATEN HALMAHERA TIMUR</p>
-                            </div>
-                        </div>
-                        <div class="text-right text-xs">
-                            <span id="adm-waktu" class="font-mono text-slate-500 block"></span>
-                        </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Unit / Fakultas / Prodi *</label>
+                        <input type="text" id="docUnit" required placeholder="Contoh: LPM / Prodi Informatika" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
-
-                    <div class="grid sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs mb-5">
-                        <div><span class="text-slate-500">Nama Peserta:</span> <strong id="adm-nama" class="text-slate-900 text-sm"></strong></div>
-                        <div><span class="text-slate-500">NISN:</span> <strong id="adm-nisn" class="font-mono text-slate-900"></strong></div>
-                        <div><span class="text-slate-500">Kelas:</span> <strong id="adm-kelas" class="text-slate-900"></strong></div>
-                        <div><span class="text-slate-500">Tempat PKL:</span> <strong id="adm-instansi" class="text-blue-800"></strong></div>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full border-collapse border border-slate-400 text-xs sm:text-sm">
-                            <thead>
-                                <tr class="bg-slate-900 text-white">
-                                    <th class="border border-slate-400 py-2.5 px-3 text-center w-12">No</th>
-                                    <th class="border border-slate-400 py-2.5 px-4 text-left">Aspek yang di Nilai</th>
-                                    <th class="border border-slate-400 py-2.5 px-3 text-center w-28">Nilai (0-100)</th>
-                                    <th class="border border-slate-400 py-2.5 px-4 text-center w-40">Predikat</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="bg-blue-50 font-bold text-slate-900">
-                                    <td class="border border-slate-400 py-2 px-3 text-center">A</td>
-                                    <td class="border border-slate-400 py-2 px-4" colspan="3">Aspek Non-Teknis (Sikap &amp; Etos Kerja)</td>
-                                </tr>
-                                <tr>
-                                    <td class="border border-slate-400 py-2 px-3 text-center">1</td>
-                                    <td class="border border-slate-400 py-2 px-4">Disiplin dan Kehadiran</td>
-                                    <td id="adm-a1" class="border border-slate-400 py-2 px-3 text-center font-mono font-bold">0</td>
-                                    <td id="adm-pa1" class="border border-slate-400 py-2 px-4 text-center font-semibold">-</td>
-                                </tr>
-                                <tr>
-                                    <td class="border border-slate-400 py-2 px-3 text-center">2</td>
-                                    <td class="border border-slate-400 py-2 px-4">Kerjasama Tim dan Komunikasi</td>
-                                    <td id="adm-a2" class="border border-slate-400 py-2 px-3 text-center font-mono font-bold">0</td>
-                                    <td id="adm-pa2" class="border border-slate-400 py-2 px-4 text-center font-semibold">-</td>
-                                </tr>
-                                <tr>
-                                    <td class="border border-slate-400 py-2 px-3 text-center">3</td>
-                                    <td class="border border-slate-400 py-2 px-4">Etika, Sikap, dan Kerapian</td>
-                                    <td id="adm-a3" class="border border-slate-400 py-2 px-3 text-center font-mono font-bold">0</td>
-                                    <td id="adm-pa3" class="border border-slate-400 py-2 px-4 text-center font-semibold">-</td>
-                                </tr>
-                                <tr class="bg-amber-50 font-bold text-slate-900">
-                                    <td class="border border-slate-400 py-2 px-3 text-center">B</td>
-                                    <td class="border border-slate-400 py-2 px-4" colspan="3">Aspek Teknis (Kompetensi Informatika)</td>
-                                </tr>
-                                <tr>
-                                    <td class="border border-slate-400 py-2 px-3 text-center">1</td>
-                                    <td class="border border-slate-400 py-2 px-4">Penguasaan Materi/Keterampilan</td>
-                                    <td id="adm-b1" class="border border-slate-400 py-2 px-3 text-center font-mono font-bold">0</td>
-                                    <td id="adm-pb1" class="border border-slate-400 py-2 px-4 text-center font-semibold">-</td>
-                                </tr>
-                                <tr>
-                                    <td class="border border-slate-400 py-2 px-3 text-center">2</td>
-                                    <td class="border border-slate-400 py-2 px-4">Kemampuan Pemecahan Masalah</td>
-                                    <td id="adm-b2" class="border border-slate-400 py-2 px-3 text-center font-mono font-bold">0</td>
-                                    <td id="adm-pb2" class="border border-slate-400 py-2 px-4 text-center font-semibold">-</td>
-                                </tr>
-                                <tr>
-                                    <td class="border border-slate-400 py-2 px-3 text-center">3</td>
-                                    <td class="border border-slate-400 py-2 px-4">Kreativitas dan Adaptasi Teknologi</td>
-                                    <td id="adm-b3" class="border border-slate-400 py-2 px-3 text-center font-mono font-bold">0</td>
-                                    <td id="adm-pb3" class="border border-slate-400 py-2 px-4 text-center font-semibold">-</td>
-                                </tr>
-                                <tr class="bg-slate-100 font-bold text-slate-900">
-                                    <td class="border border-slate-400 py-2.5 px-4 text-right" colspan="2">Total Nilai</td>
-                                    <td id="adm-total" class="border border-slate-400 py-2.5 px-3 text-center font-mono text-base text-blue-700">0</td>
-                                    <td class="border border-slate-400 py-2.5 px-4 text-center text-xs text-slate-500">Maks. 600</td>
-                                </tr>
-                                <tr class="bg-emerald-50 font-extrabold text-slate-900">
-                                    <td class="border border-slate-400 py-2.5 px-4 text-right" colspan="2">Nilai Rata-Rata</td>
-                                    <td id="adm-rata" class="border border-slate-400 py-2.5 px-3 text-center font-mono text-base text-emerald-700">0.00</td>
-                                    <td id="adm-predikat" class="border border-slate-400 py-2.5 px-4 text-center font-bold text-emerald-800">-</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Status Validasi *</label>
+                        <select id="docStatus" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="Valid">Valid / Siap AL</option>
+                            <option value="Perlu Revisi">Perlu Revisi</option>
+                            <option value="Draft">Draft</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- TAB 2: KELOLA PESERTA (NISN) -->
-                <div id="admin-tab-peserta" class="hidden space-y-5 no-print">
-                    <form onsubmit="tambahPesertaBaru(event)" class="p-4 rounded-2xl bg-slate-50 border grid sm:grid-cols-12 gap-3 items-end text-xs">
-                        <div class="sm:col-span-5">
-                            <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Siswa *</label>
-                            <input type="text" id="new-peserta-nama" required placeholder="Nama Siswa" class="w-full px-3 py-2 rounded-xl border bg-white">
+                <!-- PILIHAN SUMBER FILE: UPLOAD LANGSUNG ATAU LINK -->
+                <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-extrabold text-blue-900 uppercase">Sumber Berkas E-File (Pilih Salah Satu)</span>
+                        <div class="flex gap-1.5">
+                            <button type="button" id="btnModeUpload" onclick="switchSourceMode('upload')" class="px-3 py-1 rounded-lg text-[10px] font-bold bg-blue-600 text-white">Upload File ke Drive</button>
+                            <button type="button" id="btnModeLink" onclick="switchSourceMode('link')" class="px-3 py-1 rounded-lg text-[10px] font-bold bg-white text-slate-600 border border-slate-200">Tempel Link URL</button>
                         </div>
-                        <div class="sm:col-span-4">
-                            <label class="block font-bold text-slate-700 mb-1">NISN (10 Digit) *</label>
-                            <input type="text" id="new-peserta-nisn" required placeholder="008..." class="w-full px-3 py-2 rounded-xl border bg-white font-mono">
-                        </div>
-                        <div class="sm:col-span-3">
-                            <button type="submit" id="btn-add-peserta" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold">+ Tambah Peserta</button>
-                        </div>
-                    </form>
+                    </div>
 
-                    <div class="overflow-x-auto border rounded-2xl">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead class="bg-slate-100 text-slate-700 border-b">
-                                <tr>
-                                    <th class="py-2.5 px-3 w-12 text-center">No</th>
-                                    <th class="py-2.5 px-3">Nama Peserta</th>
-                                    <th class="py-2.5 px-3">NISN Terdaftar</th>
-                                    <th class="py-2.5 px-3 text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-peserta-admin" class="divide-y"></tbody>
-                        </table>
+                    <div id="sourceUploadBox">
+                        <input type="file" id="docFileUpload" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" class="w-full bg-white border border-blue-200 rounded-xl p-2 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                        <p class="text-[10px] text-slate-500 mt-1.5">
+                            <i class="fas fa-info-circle text-blue-500"></i> Maksimal <b>10 MB</b> (PDF/Word/Excel/Gambar). File otomatis masuk Google Drive publik & link download langsung dibuatkan di Google Sheets.
+                        </p>
+                    </div>
+
+                    <div id="sourceLinkBox" class="hidden">
+                        <input type="url" id="docUrl" placeholder="https://drive.google.com/file/d/.../view" class="w-full bg-white border border-blue-200 rounded-xl p-2.5 font-mono text-[11px] focus:ring-2 focus:ring-blue-500 outline-none">
+                        <p class="text-[10px] text-slate-500 mt-1.5">
+                            Cocok untuk file besar (&gt;10 MB). Pastikan link Google Drive diset ke <b>"Siapa saja yang memiliki link"</b> agar publik bisa mengunduh.
+                        </p>
                     </div>
                 </div>
 
-                <!-- TAB 3: GANTI LOGO SEKOLAH -->
-                <div id="admin-tab-logo" class="hidden max-w-md mx-auto py-4 no-print">
-                    <div class="flex flex-col items-center mb-4">
-                        <img id="preview-logo-modal" src="https://placehold.co/100x100/1e3a8a/fbbf24?text=SMAN+1" class="app-logo w-24 h-24 rounded-full object-cover border-2 border-amber-400 shadow">
-                    </div>
-                    <form onsubmit="simpanLogoKeDatabase(event)" class="space-y-4 text-xs">
-                        <div>
-                            <label class="block font-bold text-slate-700 mb-1">Pilih File Logo Baru (.png / .jpg) *</label>
-                            <input type="file" id="input-file-logo" accept="image/*" required onchange="previewUploadLogo(this)" class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
-                        </div>
-                        <button type="submit" id="btn-simpan-logo" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow transition">
-                            Simpan Logo ke Google Sheets
-                        </button>
-                    </form>
+                <div>
+                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Keterangan / Nomor SK (Opsional)</label>
+                    <textarea id="docKet" rows="2" placeholder="Catatan singkat, nomor SK, atau masa berlaku dokumen..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="toggleModal('docModal')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">Batal</button>
+                    <button type="submit" id="btnSubmitDoc" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow flex items-center gap-1.5">
+                        <i class="fas fa-save"></i> Simpan ke Google Sheets
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PENGATURAN GOOGLE SHEETS API -->
+    <div id="settingsModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="toggleModal('settingsModal')"></div>
+        <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl z-50 overflow-hidden">
+            <div class="bg-teal-700 px-6 py-4 text-white flex justify-between items-center">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider"><i class="fas fa-database mr-2"></i>Koneksi Database Google Sheets</h3>
+                <button onclick="toggleModal('settingsModal')" class="text-teal-200 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 text-xs">
+                <p class="text-slate-600 leading-relaxed">
+                    Masukkan <b>Web App URL Google Apps Script</b> (berakhiran <code class="bg-slate-100 px-1 rounded">/exec</code>). Agar semua pengunjung publik otomatis terhubung, pastikan URL yang sama juga ditempel di variabel <code class="bg-slate-100 px-1 rounded">DEFAULT_GAS_URL</code> pada file <code class="bg-slate-100 px-1 rounded">index.html</code> di GitHub.
+                </p>
+                <div>
+                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">URL Google Apps Script Web App</label>
+                    <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/..../exec" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-mono text-[11px] focus:ring-2 focus:ring-teal-500 outline-none">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="toggleModal('settingsModal')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">Tutup</button>
+                    <button onclick="saveGasUrlSetting()" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold shadow">Simpan & Sinkronkan</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer class="bg-slate-950 text-slate-400 py-5 text-center text-xs border-t border-slate-800 no-print">
-        © 2026 Ujian Evaluasi Siswa PKL — SMK Negeri 1 Maba, Kabupaten Halmahera Timur.
+    <!-- MODAL PRATINJAU DOKUMEN (POP-UP VIEWER) -->
+    <div id="previewModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-50 p-3 sm:p-6">
+        <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm" onclick="closePreviewModal()"></div>
+        <div class="bg-white w-full max-w-5xl h-[88vh] rounded-3xl shadow-2xl z-50 overflow-hidden flex flex-col">
+            <div class="bg-slate-900 px-5 py-3.5 text-white flex justify-between items-center shrink-0">
+                <div class="truncate pr-4">
+                    <span id="previewKode" class="px-2 py-0.5 bg-blue-600 rounded text-[10px] font-mono font-bold mr-2">KODE</span>
+                    <span id="previewTitle" class="text-xs sm:text-sm font-extrabold">Pratinjau Dokumen</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a id="previewDownloadBtn" href="#" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold flex items-center gap-1.5">
+                        <i class="fas fa-download"></i> <span class="hidden sm:inline">Download File</span>
+                    </a>
+                    <button onclick="closePreviewModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white flex items-center justify-center transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-grow bg-slate-200 relative">
+                <iframe id="previewFrame" src="" class="w-full h-full border-0" allow="autoplay"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- AREA CETAK DAFTAR INDUK -->
+    <div id="printArea" class="hidden p-8 bg-white text-black"></div>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 py-5 border-t border-slate-800 mt-10">
+        <div class="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row justify-between items-center text-xs gap-2 text-center sm:text-left">
+            <p>&copy; 2026 <strong>E-File Akreditasi Kampus</strong> — Universitas Muhammadiyah Maluku Utara.</p>
+            <p class="text-[11px] text-slate-500">GitHub Pages + Google Sheets Database</p>
+        </div>
     </footer>
 
     <script>
         // =========================================================================
-        // GANTI LINK DI BAWAH INI DENGAN URL WEB APP (/exec) GOOGLE APPS SCRIPT ANDA
+        // TEMPELKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI BAWAH INI SEBELUM PUSH KE GITHUB
         // =========================================================================
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxag_AzxELtfFml6wbayHvofBngJwHlRQqxUh0UxBw6fVTRVXNQuUJhGVDsWSvoAjDU/exec';
+        const DEFAULT_GAS_URL = ''; // Contoh: 'https://script.google.com/macros/s/AKfycb.../exec'
 
-        let logoBase64SiapKirim = '';
-        let pinAdminAktif = '';
-        let dataRekapAdmin = [];
-        let dataPesertaAdmin = [];
-        let timerInterval = null;
+        const STORAGE_KEY = 'ummu_efile_akreditasi_cache_v2';
+        const GAS_URL_KEY = 'ummu_efile_gas_url_v2';
 
-        function muatLogoDariDatabase() {
-            const cachedLogo = localStorage.getItem('sman1maba_pkl_logo');
-            if (cachedLogo) {
-                document.querySelectorAll('.app-logo').forEach(img => img.src = cachedLogo);
-            }
-            if (!scriptURL || scriptURL.includes('TEMPEL_URL')) return;
+        let gasWebAppUrl = localStorage.getItem(GAS_URL_KEY) || DEFAULT_GAS_URL;
+        let isAdmin = sessionStorage.getItem('ummu_akreditasi_admin') === 'true';
+        let sourceMode = 'upload';
+        let documents = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-            fetch(scriptURL)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success' && data.logoWeb) {
-                        document.querySelectorAll('.app-logo').forEach(img => img.src = data.logoWeb);
-                        localStorage.setItem('sman1maba_pkl_logo', data.logoWeb);
-                    }
-                })
-                .catch(() => {});
+        function updateDbStatus(state, text) {
+            const dot = document.getElementById('dbStatusDot');
+            const label = document.getElementById('dbStatusText');
+            label.innerText = text;
+            dot.className = 'w-2 h-2 rounded-full ' + (
+                state === 'connected' ? 'bg-emerald-400' :
+                state === 'loading' ? 'bg-amber-400 animate-pulse' : 'bg-rose-400'
+            );
         }
 
-        // === VERIFIKASI NISN SEBELUM MEMBUKA SOAL ===
-        function verifikasiNISNSiswa(e) {
-            e.preventDefault();
-            const nisn = document.getElementById('input-verif-nisn').value.trim();
-            const errBox = document.getElementById('verif-error-msg');
-            const btn = document.getElementById('btn-verif-nisn');
-            const orig = btn.innerHTML;
-
-            errBox.classList.add('hidden');
-            if (scriptURL.includes('TEMPEL_URL')) {
-                errBox.textContent = 'URL Google Apps Script belum diatur oleh Admin.';
-                errBox.classList.remove('hidden');
+        // TARIK DATA DARI GOOGLE SHEETS (PUBLIK & ADMIN)
+        async function loadDataFromCloud(showToast = false) {
+            if (!gasWebAppUrl) {
+                updateDbStatus('local', 'Database Belum Diset (Lokal)');
+                updateUI();
                 return;
             }
 
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa NISN...';
-
-            fetch(scriptURL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'verifyNISN', nisn: nisn })
-            })
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === 'success') {
-                    document.getElementById('siswa-nama').value = res.nama;
-                    document.getElementById('siswa-nisn').value = res.nisn;
-                    document.getElementById('section-verifikasi').classList.add('hidden');
-                    document.getElementById('section-biodata').classList.remove('hidden');
-                    document.getElementById('form-ujian-pkl').classList.remove('hidden');
-                    document.getElementById('box-timer').classList.replace('hidden', 'flex');
-                    renderDaftarSoal();
-                    mulaiTimerUjian();
-                } else {
-                    errBox.textContent = res.message || 'NISN tidak valid atau sudah pernah mengikuti ujian.';
-                    errBox.classList.remove('hidden');
-                }
-            })
-            .catch(() => {
-                errBox.textContent = 'Gagal terhubung ke server. Periksa koneksi internet Anda.';
-                errBox.classList.remove('hidden');
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerHTML = orig;
-            });
-        }
-
-        function mulaiTimerUjian() {
-            let sisaDetik = 45 * 60;
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if (sisaDetik <= 0) return;
-                sisaDetik--;
-                const m = String(Math.floor(sisaDetik / 60)).padStart(2, '0');
-                const s = String(sisaDetik % 60).padStart(2, '0');
-                document.getElementById('timer-ujian').textContent = `${m}:${s}`;
-            }, 1000);
-        }
-
-        function tampilkanRingkasanSiswa(data) {
-            document.getElementById('s-nama').textContent = data.nama;
-            document.getElementById('s-nisn').textContent = data.nisn;
-            document.getElementById('s-kelas').textContent = data.kelas;
-            document.getElementById('s-instansi').textContent = data.instansi;
-            document.getElementById('s-total').textContent = data.total;
-            document.getElementById('s-rata').textContent = data.rata;
-
-            document.getElementById('section-verifikasi').classList.add('hidden');
-            document.getElementById('form-ujian-pkl').classList.add('hidden');
-            document.getElementById('section-biodata').classList.add('hidden');
-            document.getElementById('ringkasan-hasil-siswa').classList.remove('hidden');
-        }
-
-        function cekStatusSudahUjian() {
             try {
-                const saved = localStorage.getItem('sman1maba_pkl_sudah_ujian');
-                if (saved) {
-                    tampilkanRingkasanSiswa(JSON.parse(saved));
-                    return true;
+                updateDbStatus('loading', 'Memuat Google Sheets...');
+                const res = await fetch(gasWebAppUrl);
+                const result = await res.json();
+
+                if (result.status === 'success' && Array.isArray(result.data)) {
+                    documents = result.data;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+                    updateDbStatus('connected', 'Google Sheets Terhubung');
+                    updateUI();
+                    if (showToast) {
+                        Swal.fire({ icon: 'success', title: 'Data Diperbarui', text: `${documents.length} dokumen dimuat dari Google Sheets.`, timer: 1300, showConfirmButton: false });
+                    }
                 }
-            } catch (e) {}
-            return false;
+            } catch (err) {
+                updateDbStatus('local', 'Gagal Koneksi / Cache Lokal');
+                updateUI();
+                if (showToast) {
+                    Swal.fire('Gagal Terhubung', 'Pastikan URL Google Apps Script benar dan izin akses diset ke "Siapa saja (Anyone)".', 'error');
+                }
+            }
         }
 
-        // === PANEL ADMIN ===
-        function bukaModalAdmin() {
-            document.getElementById('modal-admin').classList.remove('hidden');
-            if (pinAdminAktif) {
-                document.getElementById('admin-login-box').classList.add('hidden');
-                document.getElementById('admin-content-box').classList.remove('hidden');
-                muatDataAdmin();
+        // KIRIM DATA KE GOOGLE SHEETS
+        async function pushToGoogleSheets(action, payloadObj) {
+            if (!gasWebAppUrl) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+                updateUI();
+                return { status: 'local' };
+            }
+
+            updateDbStatus('loading', 'Menyimpan ke Cloud...');
+            const res = await fetch(gasWebAppUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action, ...payloadObj })
+            });
+            const result = await res.json();
+            if (result.status !== 'success') {
+                throw new Error(result.message || 'Gagal menyimpan ke Google Sheets');
+            }
+            updateDbStatus('connected', 'Google Sheets Terhubung');
+            return result;
+        }
+
+        function updateUI() {
+            const adminPanel = document.getElementById('adminActionPanel');
+            const btnLogin = document.getElementById('btnAdminLogin');
+            const btnLogout = document.getElementById('btnAdminLogout');
+
+            if (isAdmin) {
+                adminPanel.classList.remove('hidden');
+                btnLogin.classList.add('hidden');
+                btnLogout.classList.remove('hidden');
+                btnLogout.classList.add('flex');
             } else {
-                document.getElementById('admin-login-box').classList.remove('hidden');
-                document.getElementById('admin-content-box').classList.add('hidden');
-                document.getElementById('admin-pin-input').value = '';
+                adminPanel.classList.add('hidden');
+                btnLogin.classList.remove('hidden');
+                btnLogout.classList.add('hidden');
+                btnLogout.classList.remove('flex');
             }
+
+            updateStats();
+            renderTable();
         }
 
-        function tutupModalAdmin() { document.getElementById('modal-admin').classList.add('hidden'); }
+        function updateStats() {
+            const total = documents.length;
+            const valid = documents.filter(d => d.status === 'Valid').length;
+            const review = total - valid;
+            const uniqueKriteria = new Set(documents.map(d => d.kriteria)).size;
+            const percent = total > 0 ? Math.round((valid / total) * 100) : 0;
 
-        function pindahTabAdmin(tab) {
-            ['rekap', 'peserta', 'logo'].forEach(t => {
-                document.getElementById(`admin-tab-${t}`).classList.toggle('hidden', t !== tab);
-                document.getElementById(`tab-admin-${t}`).className = t === tab
-                    ? 'px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white'
-                    : 'px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700';
-            });
-            if (tab !== 'rekap') document.getElementById('lembar-cetak-admin').classList.add('hidden');
+            document.getElementById('statTotal').innerText = total;
+            document.getElementById('statValid').innerText = valid;
+            document.getElementById('statReview').innerText = review;
+            document.getElementById('statKriteriaCount').innerText = `${uniqueKriteria}/10`;
+            document.getElementById('readinessPercent').innerText = `${percent}%`;
+            document.getElementById('readinessBar').style.width = `${percent}%`;
+            document.getElementById('readinessText').innerText = `${valid} dari ${total} dokumen tervalidasi`;
         }
 
-        function verifikasiPinAdmin(e) {
-            e.preventDefault();
-            const pin = document.getElementById('admin-pin-input').value.trim();
-            if (scriptURL.includes('TEMPEL_URL')) return alert('Isi scriptURL terlebih dahulu.');
+        function getFilteredDocs() {
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            const k = document.getElementById('filterKriteria').value;
+            const s = document.getElementById('filterStatus').value;
 
-            const btn = document.getElementById('btn-cek-pin');
-            btn.disabled = true;
-            btn.textContent = 'Memeriksa PIN...';
-
-            fetch(scriptURL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'getAdminData', pin: pin })
-            })
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === 'success') {
-                    pinAdminAktif = pin;
-                    dataRekapAdmin = res.nilai || [];
-                    dataPesertaAdmin = res.peserta || [];
-                    document.getElementById('admin-login-box').classList.add('hidden');
-                    document.getElementById('admin-content-box').classList.remove('hidden');
-                    renderTabelRekapAdmin();
-                    renderTabelPesertaAdmin();
-                } else {
-                    alert(res.message || 'PIN Admin salah!');
-                }
-            })
-            .catch(() => alert('Gagal terhubung ke Google Sheets.'))
-            .finally(() => {
-                btn.disabled = false;
-                btn.textContent = 'Buka Panel Admin';
+            return documents.filter(d => {
+                const matchK = k === 'all' || d.kriteria === k;
+                const matchS = s === 'all' || d.status === s;
+                const matchQ = !q ||
+                    String(d.kode).toLowerCase().includes(q) ||
+                    String(d.judul).toLowerCase().includes(q) ||
+                    String(d.unit).toLowerCase().includes(q) ||
+                    String(d.keterangan || '').toLowerCase().includes(q);
+                return matchK && matchS && matchQ;
             });
         }
 
-        function muatDataAdmin() {
-            fetch(scriptURL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'getAdminData', pin: pinAdminAktif })
-            })
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === 'success') {
-                    dataRekapAdmin = res.nilai || [];
-                    dataPesertaAdmin = res.peserta || [];
-                    renderTabelRekapAdmin();
-                    renderTabelPesertaAdmin();
-                }
-            });
+        function getStatusBadge(status) {
+            if (status === 'Valid') {
+                return `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"><i class="fas fa-check-circle"></i> Valid</span>`;
+            } else if (status === 'Perlu Revisi') {
+                return `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> Revisi</span>`;
+            }
+            return `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200 inline-flex items-center gap-1"><i class="fas fa-file-alt"></i> Draft</span>`;
         }
 
-        function renderTabelRekapAdmin() {
-            const tbody = document.getElementById('tbody-rekap-admin');
-            if (!dataRekapAdmin.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Belum ada siswa yang mengumpulkan ujian.</td></tr>';
+        function getDirectDownloadUrl(doc) {
+            if (doc.download_url) return doc.download_url;
+            const driveMatch = String(doc.url || '').match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (driveMatch && driveMatch[1]) {
+                return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+            }
+            return doc.url;
+        }
+
+        function convertToPreviewUrl(url) {
+            const driveMatch = String(url || '').match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (driveMatch && driveMatch[1]) {
+                return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+            }
+            return url;
+        }
+
+        function renderTable() {
+            const filtered = getFilteredDocs();
+            const tbody = document.getElementById('docTableBody');
+            tbody.innerHTML = '';
+
+            document.getElementById('countShown').innerText = filtered.length;
+            document.getElementById('countTotal').innerText = documents.length;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-semibold">Belum ada dokumen E-File yang ditampilkan.</td></tr>`;
                 return;
             }
-            tbody.innerHTML = dataRekapAdmin.map((row, idx) => `
-                <tr class="hover:bg-slate-50">
-                    <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${row.waktu}</td>
-                    <td class="py-2.5 px-3">
-                        <div class="font-bold text-slate-900">${row.nama}</div>
-                        <div class="font-mono text-[11px] text-slate-500">${row.nisn}</div>
+
+            filtered.forEach(doc => {
+                const dlUrl = getDirectDownloadUrl(doc);
+                const adminButtons = isAdmin ? `
+                    <button onclick="editDoc('${doc.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-lg transition" title="Edit Dokumen"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteDoc('${doc.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition" title="Hapus Dokumen"><i class="fas fa-trash"></i></button>
+                ` : '';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="px-4 py-3.5 whitespace-nowrap">
+                        <span class="font-mono font-extrabold text-blue-700 block">${doc.kode}</span>
+                        <span class="text-[10px] text-slate-400 font-bold">Tahun ${doc.tahun}</span>
                     </td>
-                    <td class="py-2.5 px-3">
-                        <div class="font-semibold">${row.kelas}</div>
-                        <div class="text-[11px] text-blue-700">${row.instansi}</div>
+                    <td class="px-4 py-3.5 whitespace-nowrap">
+                        <span class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 font-extrabold text-[10px]">${doc.kriteria}</span>
                     </td>
-                    <td class="py-2.5 px-3 text-center font-mono font-bold text-blue-700">${row.total}</td>
-                    <td class="py-2.5 px-3 text-center">
-                        <span class="font-mono font-bold text-emerald-700">${row.rata}</span>
-                        <div class="text-[10px] font-bold text-slate-500">${row.predikat}</div>
+                    <td class="px-4 py-3.5">
+                        <div class="font-extrabold text-slate-800 text-xs sm:text-sm">${doc.judul}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${doc.keterangan || '-'}</div>
                     </td>
-                    <td class="py-2.5 px-3 text-right">
-                        <button type="button" onclick="bukaLembarAdmin(${idx})" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-blue-600 text-white font-bold text-[11px] transition">
-                            Lihat Lembar
-                        </button>
+                    <td class="px-4 py-3.5 font-semibold text-slate-700">${doc.unit}</td>
+                    <td class="px-4 py-3.5 text-center whitespace-nowrap">${getStatusBadge(doc.status)}</td>
+                    <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="openPreview('${doc.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-sm transition flex items-center gap-1">
+                                <i class="fas fa-eye"></i> Lihat
+                            </button>
+                            <a href="${dlUrl}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-sm transition flex items-center gap-1" title="Download Langsung">
+                                <i class="fas fa-download"></i> Unduh
+                            </a>
+                            <button onclick="copyLink('${dlUrl}')" class="bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 p-2 rounded-lg transition" title="Salin Link Download">
+                                <i class="fas fa-link"></i>
+                            </button>
+                            ${adminButtons}
+                        </div>
                     </td>
-                </tr>
-            `).join('');
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        function renderTabelPesertaAdmin() {
-            const tbody = document.getElementById('tbody-peserta-admin');
-            if (!dataPesertaAdmin.length) {
-                tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-slate-400">Belum ada peserta terdaftar.</td></tr>';
-                return;
+        function openPreview(id) {
+            const doc = documents.find(d => d.id === id);
+            if (!doc) return;
+            document.getElementById('previewKode').innerText = doc.kode;
+            document.getElementById('previewTitle').innerText = doc.judul;
+            document.getElementById('previewDownloadBtn').href = getDirectDownloadUrl(doc);
+            document.getElementById('previewFrame').src = convertToPreviewUrl(doc.url);
+            toggleModal('previewModal');
+        }
+
+        function closePreviewModal() {
+            document.getElementById('previewFrame').src = '';
+            toggleModal('previewModal');
+        }
+
+        function copyLink(url) {
+            navigator.clipboard.writeText(url);
+            Swal.fire({ icon: 'success', title: 'Link Download Disalin!', timer: 1200, showConfirmButton: false });
+        }
+
+        // SWITCH SUMBER FILE (UPLOAD VS LINK)
+        function switchSourceMode(mode) {
+            sourceMode = mode;
+            const uploadBox = document.getElementById('sourceUploadBox');
+            const linkBox = document.getElementById('sourceLinkBox');
+            const btnUpload = document.getElementById('btnModeUpload');
+            const btnLink = document.getElementById('btnModeLink');
+
+            if (mode === 'upload') {
+                uploadBox.classList.remove('hidden');
+                linkBox.classList.add('hidden');
+                btnUpload.className = 'px-3 py-1 rounded-lg text-[10px] font-bold bg-blue-600 text-white';
+                btnLink.className = 'px-3 py-1 rounded-lg text-[10px] font-bold bg-white text-slate-600 border border-slate-200';
+            } else {
+                uploadBox.classList.add('hidden');
+                linkBox.classList.remove('hidden');
+                btnLink.className = 'px-3 py-1 rounded-lg text-[10px] font-bold bg-blue-600 text-white';
+                btnUpload.className = 'px-3 py-1 rounded-lg text-[10px] font-bold bg-white text-slate-600 border border-slate-200';
             }
-            tbody.innerHTML = dataPesertaAdmin.map((p, i) => `
-                <tr class="hover:bg-slate-50">
-                    <td class="py-2.5 px-3 text-center text-slate-500">${i + 1}</td>
-                    <td class="py-2.5 px-3 font-bold text-slate-900">${p.nama}</td>
-                    <td class="py-2.5 px-3 font-mono text-blue-700 font-semibold">${p.nisn}</td>
-                    <td class="py-2.5 px-3 text-right">
-                        <button type="button" onclick="hapusPeserta('${p.nisn}')" class="px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-600 text-red-700 hover:text-white font-bold text-[11px] transition">Hapus</button>
-                    </td>
-                </tr>
-            `).join('');
         }
 
-        function tambahPesertaBaru(e) {
-            e.preventDefault();
-            const nama = document.getElementById('new-peserta-nama').value.trim();
-            const nisn = document.getElementById('new-peserta-nisn').value.trim();
-            const btn = document.getElementById('btn-add-peserta');
-            btn.disabled = true;
-            btn.textContent = 'Menyimpan...';
+        // KONVERSI FILE KE BASE64 UNTUK DIKIRIM KE GOOGLE DRIVE VIA APPS SCRIPT
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
 
-            fetch(scriptURL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'addPeserta', pin: pinAdminAktif, nama: nama, nisn: nisn })
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (res.status === 'success') {
-                    e.target.reset();
-                    muatDataAdmin();
-                } else {
-                    alert(res.message || 'Gagal menambah peserta.');
+        // PENGATURAN URL GOOGLE SHEETS
+        function openSettingsModal() {
+            document.getElementById('gasUrlInput').value = gasWebAppUrl;
+            toggleModal('settingsModal');
+        }
+
+        function saveGasUrlSetting() {
+            const val = document.getElementById('gasUrlInput').value.trim();
+            gasWebAppUrl = val;
+            localStorage.setItem(GAS_URL_KEY, val);
+            toggleModal('settingsModal');
+            loadDataFromCloud(true);
+        }
+
+        // LOGIN ADMIN
+        function handleAdminAuth() {
+            Swal.fire({
+                title: 'Login Admin Akreditasi',
+                html: `
+                    <div class="text-left space-y-3 mt-2">
+                        <div>
+                            <label class="text-xs font-bold text-slate-600 uppercase">Username</label>
+                            <input type="text" id="loginUser" class="w-full border rounded-xl p-2.5 text-sm mt-1" value="admin">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-600 uppercase">Password</label>
+                            <input type="password" id="loginPass" class="w-full border rounded-xl p-2.5 text-sm mt-1" placeholder="••••••">
+                        </div>
+                        <p class="text-[11px] text-slate-400">Default: <b>admin</b> / <b>admin123</b></p>
+                    </div>
+                `,
+                confirmButtonText: 'Masuk',
+                showCancelButton: true,
+                cancelButtonText: 'Batal',
+                preConfirm: () => {
+                    const u = document.getElementById('loginUser').value.trim();
+                    const p = document.getElementById('loginPass').value.trim();
+                    if (u === 'admin' && p === 'admin123') return true;
+                    Swal.showValidationMessage('Username atau Password salah!');
+                    return false;
                 }
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.textContent = '+ Tambah Peserta';
+            }).then(res => {
+                if (res.isConfirmed) {
+                    isAdmin = true;
+                    sessionStorage.setItem('ummu_akreditasi_admin', 'true');
+                    updateUI();
+                    Swal.fire({ icon: 'success', title: 'Login Berhasil', timer: 1000, showConfirmButton: false });
+                }
             });
         }
 
-        function hapusPeserta(nisn) {
-            if (!confirm(`Hapus peserta dengan NISN ${nisn}?`)) return;
-            fetch(scriptURL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'deletePeserta', pin: pinAdminAktif, nisn: nisn })
-            })
-            .then(r => r.json())
-            .then(() => muatDataAdmin());
+        function logoutAdmin() {
+            isAdmin = false;
+            sessionStorage.removeItem('ummu_akreditasi_admin');
+            updateUI();
         }
 
-        function bukaLembarAdmin(idx) {
-            const d = dataRekapAdmin[idx];
-            if (!d) return;
-
-            document.getElementById('adm-waktu').textContent = d.waktu;
-            document.getElementById('adm-nama').textContent = d.nama;
-            document.getElementById('adm-nisn').textContent = d.nisn;
-            document.getElementById('adm-kelas').textContent = d.kelas;
-            document.getElementById('adm-instansi').textContent = d.instansi;
-
-            ['a1', 'a2', 'a3', 'b1', 'b2', 'b3'].forEach(k => {
-                const n = Number(d[k]) || 0;
-                document.getElementById(`adm-${k}`).textContent = n;
-                document.getElementById(`adm-p${k}`).textContent = hitungPredikat(n);
-            });
-
-            document.getElementById('adm-total').textContent = d.total;
-            document.getElementById('adm-rata').textContent = d.rata;
-            document.getElementById('adm-predikat').textContent = d.predikat;
-
-            const box = document.getElementById('lembar-cetak-admin');
-            box.classList.remove('hidden');
-            box.scrollIntoView({ behavior: 'smooth' });
+        // CRUD DOKUMEN
+        function openDocModal() {
+            document.getElementById('docForm').reset();
+            document.getElementById('docId').value = '';
+            document.getElementById('docTahun').value = new Date().getFullYear();
+            document.getElementById('docModalTitle').innerHTML = '<i class="fas fa-cloud-upload-alt text-blue-400 mr-2"></i>Tambah / Upload E-File';
+            switchSourceMode('upload');
+            toggleModal('docModal');
         }
 
-        function previewUploadLogo(input) {
-            if (!input.files || !input.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const maxDim = 200;
-                    let w = img.width, h = img.height;
-                    if (w > h) { if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; } }
-                    else { if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; } }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    logoBase64SiapKirim = canvas.toDataURL('image/png', 0.8);
-                    document.getElementById('preview-logo-modal').src = logoBase64SiapKirim;
-                };
-                img.src = e.target.result;
+        function editDoc(id) {
+            const doc = documents.find(d => d.id === id);
+            if (!doc) return;
+            document.getElementById('docId').value = doc.id;
+            document.getElementById('docKode').value = doc.kode;
+            document.getElementById('docKriteria').value = doc.kriteria;
+            document.getElementById('docTahun').value = doc.tahun;
+            document.getElementById('docJudul').value = doc.judul;
+            document.getElementById('docUnit').value = doc.unit;
+            document.getElementById('docStatus').value = doc.status;
+            document.getElementById('docUrl').value = doc.url || '';
+            document.getElementById('docKet').value = doc.keterangan || '';
+            document.getElementById('docFileUpload').value = '';
+
+            document.getElementById('docModalTitle').innerHTML = '<i class="fas fa-edit text-amber-400 mr-2"></i>Edit Dokumen E-File';
+            switchSourceMode('link');
+            toggleModal('docModal');
+        }
+
+        document.getElementById('docForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const idVal = document.getElementById('docId').value;
+            const fileInput = document.getElementById('docFileUpload');
+            const selectedFile = fileInput.files[0];
+            const linkVal = document.getElementById('docUrl').value.trim();
+
+            if (sourceMode === 'upload' && !selectedFile && !idVal) {
+                return Swal.fire('Berkas Belum Dipilih', 'Silakan pilih file untuk diunggah atau beralih ke mode "Tempel Link URL".', 'warning');
+            }
+            if (sourceMode === 'link' && !linkVal) {
+                return Swal.fire('Link Kosong', 'Silakan tempelkan URL dokumen.', 'warning');
+            }
+            if (selectedFile && selectedFile.size > 10 * 1024 * 1024) {
+                return Swal.fire('Ukuran File Terlalu Besar', 'Maksimal upload langsung adalah 10 MB. Untuk file lebih besar, unggah ke Google Drive lalu tempelkan linknya.', 'warning');
+            }
+
+            const payload = {
+                id: idVal || ('doc-' + Date.now()),
+                kode: document.getElementById('docKode').value.trim().toUpperCase(),
+                kriteria: document.getElementById('docKriteria').value,
+                tahun: document.getElementById('docTahun').value,
+                judul: document.getElementById('docJudul').value.trim(),
+                unit: document.getElementById('docUnit').value.trim(),
+                status: document.getElementById('docStatus').value,
+                url: linkVal,
+                keterangan: document.getElementById('docKet').value.trim()
             };
-            reader.readAsDataURL(input.files[0]);
-        }
 
-        function simpanLogoKeDatabase(e) {
-            e.preventDefault();
-            if (!logoBase64SiapKirim) return alert('Silakan pilih file gambar logo terlebih dahulu.');
-            const btn = document.getElementById('btn-simpan-logo');
-            const orig = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = 'Menyimpan...';
-
-            fetch(scriptURL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'updateLogo', pin: pinAdminAktif, logoWeb: logoBase64SiapKirim })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    document.querySelectorAll('.app-logo').forEach(img => img.src = logoBase64SiapKirim);
-                    localStorage.setItem('sman1maba_pkl_logo', logoBase64SiapKirim);
-                    alert('Logo berhasil diperbarui dan tersimpan di Google Sheets!');
-                } else {
-                    alert(data.message || 'Gagal menyimpan logo.');
-                }
-            })
-            .finally(() => { btn.disabled = false; btn.textContent = orig; });
-        }
-
-        // === BANK SOAL TERSTRUKTUR (18 SOAL) ===
-        const bankSoalPKL = [
-            {
-                kode: 'a1', aspek: 'A.1 Disiplin dan Kehadiran',
-                tanya: 'Jam masuk kerja di instansi tempat PKL ditetapkan pukul 09.00 WIT. Tindakan paling mencerminkan kedisiplinan siswa PKL adalah...',
-                opsi: [
-                    'Hadir 10–15 menit sebelum pukul 09.00 WIT untuk mengisi presensi dan menyiapkan area kerja',
-                    'Datang tepat pukul 09.35 WIT karena masih dalam batas toleransi',
-                    'Mengisi daftar hadir melalui teman apabila terjebak hujan',
-                    'Hadir hanya pada hari ketika pembimbing lapangan berada di kantor'
-                ],
-                kunci: 0
-            },
-            {
-                kode: 'a1', aspek: 'A.1 Disiplin dan Kehadiran',
-                tanya: 'Apabila siswa PKL mengalami sakit mendadak dan tidak dapat hadir ke lokasi praktik, prosedur administrasi yang benar adalah...',
-                opsi: [
-                    'Memberi tahu teman satu kelompok melalui pesan singkat tanpa melapor ke pembimbing',
-                    'Segera menghubungi pembimbing instansi dan guru pembimbing sekolah sebelum jam kerja dimulai disertai surat keterangan',
-                    'Menjelaskan alasan ketidakhadiran pada hari berikutnya saat sudah masuk',
-                    'Mengosongkan kolom presensi pada jurnal harian PKL'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'a1', aspek: 'A.1 Disiplin dan Kehadiran',
-                tanya: 'Pengisian jurnal kegiatan harian PKL wajib dilakukan secara rutin dengan tujuan utama...',
-                opsi: [
-                    'Sebagai syarat formalitas agar mendapatkan tanda tangan di akhir bulan',
-                    'Mendokumentasikan progres keterampilan, kehadiran, dan bukti akuntabilitas kerja harian siswa',
-                    'Mengisi waktu luang saat tidak ada tugas dari staf kantor',
-                    'Menggantikan laporan akhir PKL sekolah'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'a2', aspek: 'A.2 Kerjasama Tim dan Komunikasi',
-                tanya: 'Ketika menerima instruksi pekerjaan dari staf instansi yang kurang jelas detail teknisnya, langkah komunikasi yang tepat adalah...',
-                opsi: [
-                    'Mengerjakan sebisanya tanpa bertanya agar tidak dianggap kurang mampu',
-                    'Menunda pekerjaan hingga staf tersebut menanyakan hasilnya',
-                    'Mengonfirmasi ulang poin tugas secara sopan dan mencatat instruksi penting sebelum mulai bekerja',
-                    'Menyerahkan tugas tersebut kepada rekan PKL lain'
-                ],
-                kunci: 2
-            },
-            {
-                kode: 'a2', aspek: 'A.2 Kerjasama Tim dan Komunikasi',
-                tanya: 'Dalam satu tim PKL, terjadi perbedaan pendapat mengenai pembagian tugas input data dan pengecekan jaringan. Sikap kolaboratif yang baik adalah...',
-                opsi: [
-                    'Memilih bagian tugas yang paling ringan saja',
-                    'Berdiskusi membagi peran sesuai kemampuan masing-masing dan saling membantu jika ada rekan yang kesulitan',
-                    'Bekerja sendiri-sendiri tanpa berkoordinasi',
-                    'Melaporkan anggota tim yang berbeda pendapat kepada pimpinan instansi'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'a2', aspek: 'A.2 Kerjasama Tim dan Komunikasi',
-                tanya: 'Saat melayani pegawai/mahasiswa yang membutuhkan bantuan teknis komputer di kantor, sikap komunikasi yang profesional ditunjukkan dengan...',
-                opsi: [
-                    'Menyapa dengan ramah, mendengarkan keluhan dengan saksama, dan menjelaskan solusi dengan bahasa yang mudah dipahami',
-                    'Langsung mengambil alih komputer tanpa meminta izin pengguna',
-                    'Menggunakan istilah teknis yang rumit agar terlihat mahir',
-                    'Menyuruh pegawai tersebut membaca buku panduan sendiri'
-                ],
-                kunci: 0
-            },
-            {
-                kode: 'a3', aspek: 'A.3 Etika, Sikap, dan Kerapian',
-                tanya: 'Siswa PKL di bagian administrasi/IT sering menjumpai dokumen internal atau data mahasiswa/pegawai. Prinsip etika profesi yang wajib dijaga adalah...',
-                opsi: [
-                    'Menyalin file penting ke flashdisk pribadi untuk portofolio',
-                    'Menjaga kerahasiaan data instansi dan tidak menyebarluaskan informasi internal ke pihak luar',
-                    'Mengunggah foto layar komputer berisi data kantor ke media sosial',
-                    'Membagikan password Wi-Fi kantor kepada tamu tanpa izin'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'a3', aspek: 'A.3 Etika, Sikap, dan Kerapian',
-                tanya: 'Standar kerapian dan penampilan peserta PKL SMA Negeri 1 Maba di lingkungan kerja meliputi...',
-                opsi: [
-                    'Menggunakan seragam sekolah/almamater PKL yang bersih, rapi, atribut lengkap, dan sepatu tertutup',
-                    'Memakai kaos bebas agar lebih nyaman saat memperbaiki perangkat',
-                    'Menggunakan sandal saat berada di ruang server atau ruang ber-AC',
-                    'Melepas tanda pengenal (ID Card) selama jam istirahat maupun jam kerja'
-                ],
-                kunci: 0
-            },
-            {
-                kode: 'a3', aspek: 'A.3 Etika, Sikap, dan Kerapian',
-                tanya: 'Setelah selesai menggunakan peralatan kerja seperti obeng, tang crimping, atau kabel tester di meja kerja, etika 5R (Ringkas, Rapi, Resik, Rawat, Rajin) mengharuskan siswa untuk...',
-                opsi: [
-                    'Membiarkan alat di atas meja karena akan dipakai lagi besok',
-                    'Membersihkan area kerja dan mengembalikan seluruh peralatan ke tempat penyimpanan semula dalam kondisi rapi',
-                    'Meminta petugas kebersihan kantor untuk merapikannya',
-                    'Menyimpan alat ke dalam tas pribadi'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'b1', aspek: 'B.1 Penguasaan Materi / Keterampilan Informatika',
-                tanya: 'Dalam pengolahan data rekapitulasi nilai atau inventaris barang di Microsoft Excel / Google Sheets, fungsi yang digunakan untuk menjumlahkan data berdasarkan kriteria tertentu adalah...',
-                opsi: ['VLOOKUP', 'SUMIF', 'CONCATENATE', 'COUNTBLANK'],
-                kunci: 1
-            },
-            {
-                kode: 'b1', aspek: 'B.1 Penguasaan Materi / Keterampilan Informatika',
-                tanya: 'Urutan susunan warna kabel UTP standar EIA/TIA-568B yang benar pada pin 1 hingga 3 saat melakukan crimping konektor RJ-45 adalah...',
-                opsi: [
-                    'Putih Hijau – Hijau – Putih Oranye',
-                    'Putih Oranye – Oranye – Putih Hijau',
-                    'Oranye – Putih Oranye – Hijau',
-                    'Putih Biru – Biru – Putih Oranye'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'b1', aspek: 'B.1 Penguasaan Materi / Keterampilan Informatika',
-                tanya: 'Perangkat jaringan yang berfungsi meneruskan paket data antar dua atau lebih segmen jaringan dengan alamat IP yang berbeda adalah...',
-                opsi: ['Switch Unmanaged', 'Access Point', 'Router', 'Repeater'],
-                kunci: 2
-            },
-            {
-                kode: 'b2', aspek: 'B.2 Kemampuan Pemecahan Masalah',
-                tanya: 'Sebuah komputer kantor terhubung ke jaringan Wi-Fi dan mendapatkan IP Address 169.254.12.45, namun tidak dapat membuka internet maupun server lokal. Penyebab paling tepat dari masalah tersebut adalah...',
-                opsi: [
-                    'Kabel monitor VGA/HDMI longgar',
-                    'Komputer gagal memperoleh konfigurasi IP dari DHCP Server (APIPA)',
-                    'Kapasitas harddisk sudah penuh',
-                    'Browser perlu diperbarui ke versi terbaru'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'b2', aspek: 'B.2 Kemampuan Pemecahan Masalah',
-                tanya: 'Perintah Command Prompt (CMD) yang paling tepat digunakan untuk menguji apakah koneksi dari komputer klien menuju server (misal IP 192.168.1.1) berjalan lancar tanpa packet loss adalah...',
-                opsi: ['ipconfig /release', 'ping 192.168.1.1 -t', 'netstat -a', 'chkdsk /f'],
-                kunci: 1
-            },
-            {
-                kode: 'b2', aspek: 'B.2 Kemampuan Pemecahan Masalah',
-                tanya: 'Saat mencetak dokumen penting di kantor, status printer menunjukkan "Offline" meskipun kabel USB sudah terpasang. Langkah pemecahan masalah yang sistematis adalah...',
-                opsi: [
-                    'Langsung menginstal ulang sistem operasi Windows',
-                    'Memeriksa daya listrik printer, memastikan kabel data terpasang baik, cek antrean print spooler, dan memastikan default printer sesuai',
-                    'Membongkar casing printer untuk memeriksa motherboard',
-                    'Mengganti cartridge tinta baru'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'b3', aspek: 'B.3 Kreativitas dan Adaptasi Teknologi',
-                tanya: 'Instansi tempat PKL ingin mendigitalisasi arsip surat masuk agar dapat diakses bersama oleh beberapa bagian secara real-time dan aman. Solusi teknologi berbasis cloud yang paling efektif diterapkan adalah...',
-                opsi: [
-                    'Menyimpan seluruh file hanya di satu komputer desktop tanpa cadangan',
-                    'Memanfaatkan Google Drive / Cloud Storage dengan struktur folder terorganisir dan pengaturan hak akses berbagi (View/Edit)',
-                    'Mencetak ulang semua surat dan menyimpannya di lemari besi',
-                    'Mengirimkan file satu per satu melalui Bluetooth'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'b3', aspek: 'B.3 Kreativitas dan Adaptasi Teknologi',
-                tanya: 'Saat instansi meminta pembuatan formulir pendaftaran layanan publik online yang datanya langsung masuk otomatis ke tabel rekapitulasi, kombinasi perangkat lunak yang paling efisien adalah...',
-                opsi: [
-                    'Microsoft Paint dan Notepad',
-                    'Google Forms yang terhubung langsung ke Google Sheets',
-                    'Windows Media Player dan Kalkulator',
-                    'CorelDRAW dan WinRAR'
-                ],
-                kunci: 1
-            },
-            {
-                kode: 'b3', aspek: 'B.3 Kreativitas dan Adaptasi Teknologi',
-                tanya: 'Ketika dihadapkan pada aplikasi perkantoran atau sistem informasi baru yang belum pernah dipelajari di kelas, sikap adaptasi teknologi yang tepat adalah...',
-                opsi: [
-                    'Menolak tugas karena merasa belum pernah diajarkan di sekolah',
-                    'Mempelajari dokumentasi/panduan fitur aplikasi tersebut secara mandiri, mencoba di lingkungan uji coba, dan bertanya pada mentor bila ada kendala',
-                    'Menunggu hingga masa PKL selesai',
-                    'Meminta orang lain mengerjakan seluruh tugas tersebut'
-                ],
-                kunci: 1
-            }
-        ];
-
-        function renderDaftarSoal() {
-            const container = document.getElementById('container-soal');
-            container.innerHTML = bankSoalPKL.map((item, idx) => {
-                const hurufOpsi = ['A', 'B', 'C', 'D'];
-                const badgeColor = item.kode.startsWith('a')
-                    ? 'bg-blue-100 text-blue-800 border-blue-200'
-                    : 'bg-amber-100 text-amber-900 border-amber-200';
-
-                return `
-                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
-                    <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
-                        <span class="text-[11px] font-bold px-3 py-1 rounded-full border ${badgeColor}">${item.aspek}</span>
-                        <span class="text-xs font-mono font-bold text-slate-400">Soal #${idx + 1}</span>
-                    </div>
-                    <p class="font-semibold text-sm sm:text-base text-slate-900 mb-4 leading-relaxed">
-                        ${idx + 1}. ${item.tanya}
-                    </p>
-                    <div class="space-y-2.5">
-                        ${item.opsi.map((teksOpsi, oIdx) => `
-                            <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-blue-50/60 hover:border-blue-300 cursor-pointer transition text-xs sm:text-sm">
-                                <input type="radio" name="soal_${idx}" value="${oIdx}" required class="mt-0.5 accent-blue-600 w-4 h-4 shrink-0">
-                                <span><strong class="text-slate-700 mr-1">${hurufOpsi[oIdx]}.</strong> ${teksOpsi}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function hitungPredikat(nilai) {
-            if (nilai >= 90) return 'Sangat Baik (A)';
-            if (nilai >= 80) return 'Baik (B)';
-            if (nilai >= 70) return 'Cukup (C)';
-            return 'Kurang (D)';
-        }
-
-        function prosesNilaiUjian(e) {
-            e.preventDefault();
-
-            const nama = document.getElementById('siswa-nama').value.trim();
-            const nisn = document.getElementById('siswa-nisn').value.trim();
-            const kelas = document.getElementById('siswa-kelas').value.trim();
-            const instansi = document.getElementById('siswa-instansi').value.trim();
-
-            if (!kelas || !instansi) {
-                alert('Harap isi Kelas dan Instansi / Tempat PKL terlebih dahulu.');
-                return;
-            }
-
-            const btn = document.getElementById('btn-selesai-ujian');
-            const orig = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan Jawaban...';
-
-            const skorBenar = { a1: 0, a2: 0, a3: 0, b1: 0, b2: 0, b3: 0 };
-            const jumlahSoal = { a1: 0, a2: 0, a3: 0, b1: 0, b2: 0, b3: 0 };
-
-            bankSoalPKL.forEach((item, idx) => {
-                jumlahSoal[item.kode]++;
-                const dipilih = document.querySelector(`input[name="soal_${idx}"]:checked`);
-                if (dipilih && parseInt(dipilih.value, 10) === item.kunci) {
-                    skorBenar[item.kode]++;
-                }
+            Swal.fire({
+                title: selectedFile ? 'Mengunggah File ke Google Drive...' : 'Menyimpan ke Google Sheets...',
+                text: 'Mohon tunggu sebentar.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
             });
 
-            const nilaiIndikator = {};
-            let totalNilai = 0;
-            ['a1', 'a2', 'a3', 'b1', 'b2', 'b3'].forEach(k => {
-                const n = Math.round((skorBenar[k] / jumlahSoal[k]) * 100);
-                nilaiIndikator[k] = n;
-                totalNilai += n;
-            });
-
-            const rataRata = (totalNilai / 6).toFixed(2);
-            const predikatAkhir = hitungPredikat(parseFloat(rataRata));
-
-            fetch(scriptURL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'submitNilai',
-                    nama: nama, nisn: nisn, kelas: kelas, instansi: instansi,
-                    a1: nilaiIndikator.a1, a2: nilaiIndikator.a2, a3: nilaiIndikator.a3,
-                    b1: nilaiIndikator.b1, b2: nilaiIndikator.b2, b3: nilaiIndikator.b3,
-                    total: totalNilai, rata: rataRata, predikat: predikatAkhir
-                })
-            })
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === 'duplicate') {
-                    alert(res.message);
-                    btn.disabled = false;
-                    btn.innerHTML = orig;
-                    return;
+            try {
+                if (selectedFile) {
+                    payload.file_base64 = await readFileAsBase64(selectedFile);
+                    payload.file_name = selectedFile.name;
+                    payload.file_mime = selectedFile.type || 'application/pdf';
                 }
+
+                const res = await pushToGoogleSheets('save', { data: payload });
+                toggleModal('docModal');
+
                 if (res.status === 'success') {
-                    const ringkasan = { nama, nisn, kelas, instansi, total: totalNilai, rata: rataRata };
-                    localStorage.setItem('sman1maba_pkl_sudah_ujian', JSON.stringify(ringkasan));
-                    tampilkanRingkasanSiswa(ringkasan);
-                    document.getElementById('ringkasan-hasil-siswa').scrollIntoView({ behavior: 'smooth' });
+                    await loadDataFromCloud(false);
+                    Swal.fire({ icon: 'success', title: 'Berhasil Tersimpan!', text: 'Dokumen telah masuk ke Google Sheets & siap diunduh publik.', timer: 1600, showConfirmButton: false });
                 } else {
-                    alert('Gagal menyimpan: ' + (res.message || 'Kesalahan server.'));
-                    btn.disabled = false;
-                    btn.innerHTML = orig;
+                    // Fallback jika GAS URL belum diisi
+                    const idx = documents.findIndex(d => d.id === payload.id);
+                    if (idx !== -1) documents[idx] = payload; else documents.unshift(payload);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+                    updateUI();
+                    Swal.fire('Tersimpan Lokal', 'URL Google Sheets belum diatur. Atur di menu "Pengaturan Google Sheets" agar tampil ke publik.', 'info');
                 }
-            })
-            .catch(() => {
-                alert('Koneksi ke Google Sheets gagal. Silakan coba kirim kembali.');
-                btn.disabled = false;
-                btn.innerHTML = orig;
+            } catch (err) {
+                Swal.fire('Gagal Menyimpan', err.message, 'error');
+            }
+        });
+
+        function deleteDoc(id) {
+            Swal.fire({
+                title: 'Hapus Dokumen?',
+                text: 'Data E-File ini akan dihapus dari Google Sheets.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                confirmButtonText: 'Ya, Hapus'
+            }).then(async res => {
+                if (res.isConfirmed) {
+                    try {
+                        documents = documents.filter(d => d.id !== id);
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+                        updateUI();
+                        await pushToGoogleSheets('delete', { id });
+                        Swal.fire('Terhapus!', 'Dokumen telah dihapus dari Google Sheets.', 'success');
+                    } catch (err) {
+                        Swal.fire('Error', err.message, 'error');
+                    }
+                }
             });
         }
 
-        window.onload = function() {
-            muatLogoDariDatabase();
-            cekStatusSudahUjian();
-        };
+        // EXPORT & IMPORT EXCEL (SINKRON KE GOOGLE SHEETS)
+        function exportToExcel() {
+            const list = getFilteredDocs();
+            if (list.length === 0) return Swal.fire('Kosong', 'Tidak ada data untuk diekspor.', 'warning');
+            const rows = list.map((d, i) => ({
+                "No": i + 1,
+                "Kode": d.kode,
+                "Kriteria": d.kriteria,
+                "Judul Dokumen": d.judul,
+                "Unit / Prodi": d.unit,
+                "Tahun": d.tahun,
+                "Status": d.status,
+                "Tautan File": d.url,
+                "Link Download Publik": getDirectDownloadUrl(d),
+                "Keterangan": d.keterangan || '-'
+            }));
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "E-File Akreditasi");
+            XLSX.writeFile(wb, `Rekap_EFile_Akreditasi_UMMU_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        document.getElementById('importExcelInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                try {
+                    const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+                    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                    const batch = [];
+                    rows.forEach((r, idx) => {
+                        const judul = r['Judul Dokumen'] || r.judul;
+                        const url = r['Tautan File'] || r.url;
+                        if (judul && url) {
+                            batch.push({
+                                id: 'doc-' + Date.now() + '-' + idx,
+                                kode: String(r.Kode || r.kode || `DOC-${idx + 1}`),
+                                kriteria: r.Kriteria || r.kriteria || 'Kriteria 1',
+                                judul: String(judul),
+                                unit: r['Unit / Prodi'] || r.unit || 'UMMU',
+                                tahun: String(r.Tahun || r.tahun || new Date().getFullYear()),
+                                status: r.Status || r.status || 'Valid',
+                                url: String(url),
+                                keterangan: r.Keterangan || r.keterangan || ''
+                            });
+                        }
+                    });
+                    if (batch.length === 0) return Swal.fire('Kosong', 'Tidak ditemukan kolom "Judul Dokumen" & "Tautan File".', 'warning');
+
+                    Swal.fire({ title: `Menyimpan ${batch.length} Data ke Google Sheets...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    await pushToGoogleSheets('save', { data: batch });
+                    await loadDataFromCloud(false);
+                    Swal.fire('Import Berhasil', `${batch.length} dokumen berhasil masuk ke Google Sheets.`, 'success');
+                } catch (err) {
+                    Swal.fire('Error', 'Gagal mengimpor Excel: ' + err.message, 'error');
+                }
+                e.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // CETAK DAFTAR INDUK
+        function printMasterList() {
+            const list = getFilteredDocs();
+            const rowsHtml = list.map((d, i) => `
+                <tr>
+                    <td style="border:1px solid #333;padding:6px;text-align:center;">${i + 1}</td>
+                    <td style="border:1px solid #333;padding:6px;font-family:monospace;">${d.kode}</td>
+                    <td style="border:1px solid #333;padding:6px;">${d.kriteria}</td>
+                    <td style="border:1px solid #333;padding:6px;"><b>${d.judul}</b><br><small>${d.keterangan || ''}</small></td>
+                    <td style="border:1px solid #333;padding:6px;">${d.unit}</td>
+                    <td style="border:1px solid #333;padding:6px;text-align:center;">${d.tahun}</td>
+                    <td style="border:1px solid #333;padding:6px;text-align:center;">${d.status}</td>
+                </tr>
+            `).join('');
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = `
+                <div style="font-family: Arial, sans-serif;">
+                    <div style="text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:16px;">
+                        <h2 style="margin:0;font-size:18px;">UNIVERSITAS MUHAMMADIYAH MALUKU UTARA</h2>
+                        <h3 style="margin:4px 0;font-size:14px;">DAFTAR INDUK E-FILE BUKTI DUKUNG AKREDITASI</h3>
+                        <p style="margin:0;font-size:11px;">Dicetak pada: ${new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}</p>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                        <thead>
+                            <tr style="background:#f1f5f9;">
+                                <th style="border:1px solid #333;padding:6px;">No</th>
+                                <th style="border:1px solid #333;padding:6px;">Kode</th>
+                                <th style="border:1px solid #333;padding:6px;">Kriteria</th>
+                                <th style="border:1px solid #333;padding:6px;">Nama Dokumen</th>
+                                <th style="border:1px solid #333;padding:6px;">Unit / Prodi</th>
+                                <th style="border:1px solid #333;padding:6px;">Tahun</th>
+                                <th style="border:1px solid #333;padding:6px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+            `;
+            printArea.classList.remove('hidden');
+            window.print();
+            setTimeout(() => printArea.classList.add('hidden'), 500);
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterKriteria').value = 'all';
+            document.getElementById('filterStatus').value = 'all';
+            renderTable();
+        }
+
+        function toggleModal(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('opacity-0');
+            el.classList.toggle('pointer-events-none');
+            document.body.classList.toggle('modal-active');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUI();
+            loadDataFromCloud(false);
+        });
     </script>
 </body>
 </html>
